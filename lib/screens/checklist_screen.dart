@@ -17,8 +17,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   int? _checklistId;
   bool _loading = true;
   bool _enviando = false;
-  bool _yaEnviado = false;  // true si ya fue enviado y espera aprobación
-  bool _aprobado  = false;
+  bool _yaEnviado = false; // true si ya fue enviado y espera aprobación
+  bool _aprobado = false;
   bool _rechazado = false;
   String? _error;
 
@@ -54,28 +54,29 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       _checklistId = data['checklist_id'] as int?;
 
       // Cargar estado actual del checklist para saber si ya fue enviado
-      final ckData = await api.get(
-          '/api/conductor/viajes/${widget.solicitudId}/checklist');
+      final ckData = await api
+          .get('/api/conductor/viajes/${widget.solicitudId}/checklist');
       final ck = ckData['checklist'];
       if (ck != null && ck is Map<String, dynamic>) {
-        final enviado = ck['enviado_revision'] == true || ck['enviado_revision'] == 1;
-        final estado  = ck['estado'] as String? ?? 'PENDIENTE';
+        final enviado =
+            ck['enviado_revision'] == true || ck['enviado_revision'] == 1;
+        final estado = ck['estado'] as String? ?? 'PENDIENTE';
 
         // Restaurar fotos ya subidas — protege contra muerte de proceso Android
         // mientras la cámara estaba abierta (proceso kill + recreación de actividad).
         const latKeys = {
-          'foto_llantas':          'lat_llantas',
-          'foto_equipo_carreteras':'lat_equipo_carreteras',
-          'foto_aceite':           'lat_aceite',
-          'foto_liquido_frenos':   'lat_liquido_frenos',
-          'foto_refrigerante':     'lat_refrigerante',
+          'foto_llantas': 'lat_llantas',
+          'foto_equipo_carreteras': 'lat_equipo_carreteras',
+          'foto_aceite': 'lat_aceite',
+          'foto_liquido_frenos': 'lat_liquido_frenos',
+          'foto_refrigerante': 'lat_refrigerante',
         };
         const lngKeys = {
-          'foto_llantas':          'lng_llantas',
-          'foto_equipo_carreteras':'lng_equipo_carreteras',
-          'foto_aceite':           'lng_aceite',
-          'foto_liquido_frenos':   'lng_liquido_frenos',
-          'foto_refrigerante':     'lng_refrigerante',
+          'foto_llantas': 'lng_llantas',
+          'foto_equipo_carreteras': 'lng_equipo_carreteras',
+          'foto_aceite': 'lng_aceite',
+          'foto_liquido_frenos': 'lng_liquido_frenos',
+          'foto_refrigerante': 'lng_refrigerante',
         };
         for (final campo in _fotos.keys.toList()) {
           final path = ck[campo] as String?;
@@ -88,9 +89,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
         setState(() {
           _yaEnviado = enviado && estado == 'PENDIENTE';
-          _aprobado  = estado == 'APROBADO';
+          _aprobado = estado == 'APROBADO';
           _rechazado = estado == 'RECHAZADO';
-          _loading   = false;
+          _loading = false;
         });
         return;
       }
@@ -135,7 +136,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.message}'),
+          SnackBar(
+              content: Text('Error: ${e.message}'),
               backgroundColor: AppTheme.error),
         );
       }
@@ -152,7 +154,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       await api.enviarChecklist(widget.solicitudId);
       setState(() {
         _yaEnviado = true;
-        _enviando  = false;
+        _enviando = false;
       });
     } on ApiException catch (e) {
       setState(() {
@@ -180,14 +182,16 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         icon: Icons.verified,
                         color: AppTheme.success,
                         titulo: 'Checklist aprobado',
-                        subtitulo: 'El responsable aprobó el checklist. Puedes iniciar el viaje.',
+                        subtitulo:
+                            'El responsable aprobó el checklist. Puedes iniciar el viaje.',
                       )
                     : _rechazado
                         ? _buildEstado(
                             icon: Icons.cancel,
                             color: AppTheme.error,
                             titulo: 'Checklist rechazado',
-                            subtitulo: 'El responsable rechazó el checklist. Toma nuevas fotos y vuelve a enviar.',
+                            subtitulo:
+                                'El responsable rechazó el checklist. Toma nuevas fotos y vuelve a enviar.',
                             mostrarVolver: true,
                           )
                         : _yaEnviado
@@ -195,7 +199,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                                 icon: Icons.hourglass_top,
                                 color: AppTheme.warning,
                                 titulo: 'Esperando aprobación',
-                                subtitulo: 'El checklist fue enviado al responsable de la empresa. Recibirás una notificación cuando sea revisado.',
+                                subtitulo:
+                                    'El checklist fue enviado al responsable de la empresa. Recibirás una notificación cuando sea revisado.',
                               )
                             : _buildForm(),
       ),
@@ -220,14 +225,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             Text(titulo,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: color,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
+                    color: color, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text(subtitulo,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: AppTheme.onSurface, fontSize: 14)),
+                style:
+                    const TextStyle(color: AppTheme.onSurface, fontSize: 14)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -257,8 +260,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       itemBuilder: (_, index) {
         if (index < campos.length) {
           final campo = campos[index];
-          final tieneFoto =
-              _fotos[campo] != null && _fotos[campo]!.isNotEmpty;
+          final tieneFoto = _fotos[campo] != null && _fotos[campo]!.isNotEmpty;
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: Padding(
@@ -270,9 +272,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                     children: [
                       Icon(
                         tieneFoto ? Icons.check_circle : Icons.circle_outlined,
-                        color: tieneFoto
-                            ? AppTheme.success
-                            : AppTheme.onSurface,
+                        color:
+                            tieneFoto ? AppTheme.success : AppTheme.onSurface,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -323,12 +324,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               : Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.warning.withOpacity(0.1),
+                    color: AppTheme.warning.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'Faltan ${_fotos.values.where((v) => v == null).length} foto(s) por cargar',
-                    style: const TextStyle(color: AppTheme.warning, fontSize: 13),
+                    style:
+                        const TextStyle(color: AppTheme.warning, fontSize: 13),
                   ),
                 ),
         );

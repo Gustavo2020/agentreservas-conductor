@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -103,18 +105,17 @@ class _CierreDiaScreenState extends State<CierreDiaScreen> {
           backgroundColor: AppTheme.success,
         ),
       );
-      Navigator.of(context).pushAndRemoveUntil(
+      unawaited(Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const ViajesScreen()),
         (_) => false,
-      );
+      ));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<ViajeProvider>();
-    final hayPendientes =
-        prov.soportesDia.any((s) => s.pendiente);
+    final hayPendientes = prov.soportesDia.any((s) => s.pendiente);
     final todosAprobados = prov.soportesDia.isNotEmpty &&
         prov.soportesDia.every((s) => s.aprobado);
 
@@ -146,8 +147,8 @@ class _CierreDiaScreenState extends State<CierreDiaScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   title: Text(s.tipo,
                       style: const TextStyle(color: AppTheme.onBackground)),
                   subtitle: Text(
@@ -182,7 +183,7 @@ class _CierreDiaScreenState extends State<CierreDiaScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppTheme.warning.withOpacity(0.1),
+                  color: AppTheme.warning.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -207,8 +208,8 @@ class _CierreDiaScreenState extends State<CierreDiaScreen> {
               const Divider(),
               const SizedBox(height: 12),
               ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.success),
+                style:
+                    ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
                 icon: const Icon(Icons.flag),
                 label: const Text('🏁 Cerrar viaje completo'),
                 onPressed: _cerrarViaje,

@@ -1,30 +1,24 @@
-/// Punto de entrada para ejecutar toda la suite de tests.
-///
-/// Ejecutar: flutter test test/all_tests.dart
-///
-/// O por categoría:
-///   flutter test test/models/
-///   flutter test test/services/
-///   flutter test test/providers/
-///   flutter test test/widgets/
+// Punto de entrada para ejecutar toda la suite de tests.
+//
+// Ejecutar: flutter test test/all_tests.dart
+//
+// O por categoría:
+//   flutter test test/models/
+//   flutter test test/services/
+//   flutter test test/providers/
+//   flutter test test/widgets/
 
 // Modelos
-import 'models/viaje_test.dart' as viaje_test;
 import 'models/checklist_test.dart' as checklist_test;
 import 'models/soporte_test.dart' as soporte_test;
 import 'models/trayecto_test.dart' as trayecto_test;
-
-// Servicios
-import 'services/auth_service_test.dart' as auth_service_test;
-import 'services/api_service_test.dart' as api_service_test;
-import 'services/ws_service_test.dart' as ws_service_test;
-
-// Providers
+import 'models/viaje_test.dart' as viaje_test;
 import 'providers/auth_provider_test.dart' as auth_provider_test;
 import 'providers/viaje_provider_test.dart' as viaje_provider_test;
 import 'providers/ws_provider_test.dart' as ws_provider_test;
-
-// Widgets
+import 'services/api_service_test.dart' as api_service_test;
+import 'services/auth_service_test.dart' as auth_service_test;
+import 'services/ws_service_test.dart' as ws_service_test;
 import 'widgets/estado_badge_test.dart' as estado_badge_test;
 import 'widgets/loading_overlay_test.dart' as loading_overlay_test;
 

@@ -16,7 +16,8 @@ Future<void> main() async {
   // Inicializar logging persistente antes de runApp para que logFilePath
   // esté disponible desde el primer frame y todos los errores queden en disco.
   await AppLogger.init();
-  AppLogger.info('App iniciada', context: {'logFile': AppLogger.logFilePath ?? 'N/A'});
+  AppLogger.info('App iniciada',
+      context: {'logFile': AppLogger.logFilePath ?? 'N/A'});
   runApp(const AgentReservasConductorApp());
 }
 
@@ -26,9 +27,9 @@ class AgentReservasConductorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Servicios (singletons)
-    final authService   = AuthService();
-    final apiService    = ApiService(authService);
-    final wsService     = WsService(authService);
+    final authService = AuthService();
+    final apiService = ApiService(authService);
+    final wsService = WsService(authService);
 
     return MultiProvider(
       providers: [

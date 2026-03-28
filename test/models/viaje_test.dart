@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:agentreservas_conductor/models/viaje.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Viaje.fromJson', () {
@@ -78,8 +78,12 @@ void main() {
     });
 
     test('ruta_aceptada=false → rutaAceptada=false', () {
-      final v = Viaje.fromJson(
-          {'id': 1, 'token': 'T', 'estado': 'APROBADO', 'ruta_aceptada': false});
+      final v = Viaje.fromJson({
+        'id': 1,
+        'token': 'T',
+        'estado': 'APROBADO',
+        'ruta_aceptada': false
+      });
       expect(v.rutaAceptada, isFalse);
     });
 
@@ -91,8 +95,12 @@ void main() {
 
   group('Viaje.viajeIniciado / enSitio', () {
     test('viaje_iniciado=true → viajeIniciado=true', () {
-      final v = Viaje.fromJson(
-          {'id': 1, 'token': 'T', 'estado': 'EN_CURSO', 'viaje_iniciado': true});
+      final v = Viaje.fromJson({
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
+        'viaje_iniciado': true
+      });
       expect(v.viajeIniciado, isTrue);
     });
 
@@ -118,11 +126,13 @@ void main() {
       expect(v.enSitio, isFalse);
     });
 
-    test('estado EN_CURSO sin viaje_iniciado → viajeIniciado=false (bug histórico)', () {
+    test(
+        'estado EN_CURSO sin viaje_iniciado → viajeIniciado=false (bug histórico)',
+        () {
       // El backend setea EN_CURSO al asignar vehículo; no implica que el
       // conductor haya iniciado el viaje. viajeIniciado es el campo correcto.
       final v = Viaje.fromJson({'id': 1, 'token': 'T', 'estado': 'EN_CURSO'});
-      expect(v.esEnCurso, isTrue);    // estado DB = EN_CURSO
+      expect(v.esEnCurso, isTrue); // estado DB = EN_CURSO
       expect(v.viajeIniciado, isFalse); // pero aún no inició formalmente
     });
   });
@@ -135,10 +145,22 @@ void main() {
 
     test('trayectos dias 1 y 2 → totalDias=2', () {
       final v = Viaje.fromJson({
-        'id': 1, 'token': 'T', 'estado': 'EN_CURSO',
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
         'trayectos': [
-          {'id': 1, 'dia_numero': 1, 'origen_municipio': 'Bogotá', 'destino_municipio': 'Cali'},
-          {'id': 2, 'dia_numero': 2, 'origen_municipio': 'Cali', 'destino_municipio': 'Palmira'},
+          {
+            'id': 1,
+            'dia_numero': 1,
+            'origen_municipio': 'Bogotá',
+            'destino_municipio': 'Cali'
+          },
+          {
+            'id': 2,
+            'dia_numero': 2,
+            'origen_municipio': 'Cali',
+            'destino_municipio': 'Palmira'
+          },
         ],
       });
       expect(v.totalDias, 2);
@@ -146,34 +168,74 @@ void main() {
 
     test('ningún día cerrado → todosLosDiasCerrados=false', () {
       final v = Viaje.fromJson({
-        'id': 1, 'token': 'T', 'estado': 'EN_CURSO',
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
         'trayectos': [
-          {'id': 1, 'dia_numero': 1, 'origen_municipio': 'A', 'destino_municipio': 'B'},
-          {'id': 2, 'dia_numero': 2, 'origen_municipio': 'B', 'destino_municipio': 'C'},
+          {
+            'id': 1,
+            'dia_numero': 1,
+            'origen_municipio': 'A',
+            'destino_municipio': 'B'
+          },
+          {
+            'id': 2,
+            'dia_numero': 2,
+            'origen_municipio': 'B',
+            'destino_municipio': 'C'
+          },
         ],
       });
       expect(v.todosLosDiasCerrados, isFalse);
     });
 
-    test('solo día 1 cerrado en viaje de 2 días → todosLosDiasCerrados=false', () {
+    test('solo día 1 cerrado en viaje de 2 días → todosLosDiasCerrados=false',
+        () {
       final v = Viaje.fromJson({
-        'id': 1, 'token': 'T', 'estado': 'EN_CURSO',
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
         'trayectos': [
-          {'id': 1, 'dia_numero': 1, 'origen_municipio': 'A', 'destino_municipio': 'B'},
-          {'id': 2, 'dia_numero': 2, 'origen_municipio': 'B', 'destino_municipio': 'C'},
+          {
+            'id': 1,
+            'dia_numero': 1,
+            'origen_municipio': 'A',
+            'destino_municipio': 'B'
+          },
+          {
+            'id': 2,
+            'dia_numero': 2,
+            'origen_municipio': 'B',
+            'destino_municipio': 'C'
+          },
         ],
-        'cierres': [{'dia_numero': 1, 'solicitud_viaje_id': 1}],
+        'cierres': [
+          {'dia_numero': 1, 'solicitud_viaje_id': 1}
+        ],
       });
       expect(v.todosLosDiasCerrados, isFalse);
       expect(v.diaActual, 2);
     });
 
-    test('ambos días cerrados en viaje de 2 días → todosLosDiasCerrados=true', () {
+    test('ambos días cerrados en viaje de 2 días → todosLosDiasCerrados=true',
+        () {
       final v = Viaje.fromJson({
-        'id': 1, 'token': 'T', 'estado': 'EN_CURSO',
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
         'trayectos': [
-          {'id': 1, 'dia_numero': 1, 'origen_municipio': 'A', 'destino_municipio': 'B'},
-          {'id': 2, 'dia_numero': 2, 'origen_municipio': 'B', 'destino_municipio': 'C'},
+          {
+            'id': 1,
+            'dia_numero': 1,
+            'origen_municipio': 'A',
+            'destino_municipio': 'B'
+          },
+          {
+            'id': 2,
+            'dia_numero': 2,
+            'origen_municipio': 'B',
+            'destino_municipio': 'C'
+          },
         ],
         'cierres': [
           {'dia_numero': 1, 'solicitud_viaje_id': 1},
@@ -194,8 +256,12 @@ void main() {
 
     test('cierres=[{dia_numero:1}] → diaActual=2', () {
       final v = Viaje.fromJson({
-        'id': 1, 'token': 'T', 'estado': 'EN_CURSO',
-        'cierres': [{'dia_numero': 1, 'solicitud_viaje_id': 1}],
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
+        'cierres': [
+          {'dia_numero': 1, 'solicitud_viaje_id': 1}
+        ],
       });
       expect(v.diasCerrados, [1]);
       expect(v.diaActual, 2);
@@ -203,7 +269,9 @@ void main() {
 
     test('cierres=[{dia_numero:1},{dia_numero:2}] → diaActual=3', () {
       final v = Viaje.fromJson({
-        'id': 1, 'token': 'T', 'estado': 'EN_CURSO',
+        'id': 1,
+        'token': 'T',
+        'estado': 'EN_CURSO',
         'cierres': [
           {'dia_numero': 1, 'solicitud_viaje_id': 1},
           {'dia_numero': 2, 'solicitud_viaje_id': 1},
@@ -234,8 +302,7 @@ void main() {
     });
 
     test('estado FINALIZADO → ambos false', () {
-      final v =
-          Viaje.fromJson({'id': 1, 'token': 'T', 'estado': 'FINALIZADO'});
+      final v = Viaje.fromJson({'id': 1, 'token': 'T', 'estado': 'FINALIZADO'});
       expect(v.esProximo, isFalse);
       expect(v.esEnCurso, isFalse);
     });

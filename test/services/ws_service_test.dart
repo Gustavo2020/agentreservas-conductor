@@ -1,9 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:agentreservas_conductor/services/auth_service.dart';
+import 'package:agentreservas_conductor/services/ws_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:agentreservas_conductor/services/ws_service.dart';
-import 'package:agentreservas_conductor/services/auth_service.dart';
 
 AuthService _makeAuth({String? token}) {
   FlutterSecureStorage.setMockInitialValues(
@@ -52,7 +52,8 @@ void main() {
     });
 
     test('NOTIFICACION parseada correctamente', () {
-      final msg = WsMensaje.fromJson({'tipo': 'NOTIFICACION', 'texto': 'Aviso'});
+      final msg =
+          WsMensaje.fromJson({'tipo': 'NOTIFICACION', 'texto': 'Aviso'});
       expect(msg.tipo, WsMensajeTipo.notificacion);
     });
 

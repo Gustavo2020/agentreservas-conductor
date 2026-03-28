@@ -147,12 +147,11 @@ class AppLogger {
     r'eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*',
   );
 
-  static String _sanitize(String input) => input
-      .replaceAll(_jwtRegex, '<JWT_REDACTED>')
-      .replaceAll(
-        RegExp(r'"password"\s*:\s*"[^"]*"'),
-        '"password":"<REDACTED>"',
-      );
+  static String _sanitize(String input) =>
+      input.replaceAll(_jwtRegex, '<JWT_REDACTED>').replaceAll(
+            RegExp(r'"password"\s*:\s*"[^"]*"'),
+            '"password":"<REDACTED>"',
+          );
 
   static String _fmt(String message, Map<String, dynamic>? context) {
     final base = _sanitize(message);

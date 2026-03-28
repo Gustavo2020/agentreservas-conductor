@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:agentreservas_conductor/config/theme.dart';
 import 'package:agentreservas_conductor/widgets/loading_overlay.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget w) => MaterialApp(theme: AppTheme.dark, home: Scaffold(body: w));
+Widget _wrap(Widget w) =>
+    MaterialApp(theme: AppTheme.dark, home: Scaffold(body: w));
 
 void main() {
   group('LoadingOverlay — visibilidad', () {
@@ -56,7 +57,8 @@ void main() {
       // No hay texto adicional (el hijo es SizedBox)
     });
 
-    testWidgets('con mensaje → muestra texto debajo del spinner', (tester) async {
+    testWidgets('con mensaje → muestra texto debajo del spinner',
+        (tester) async {
       await tester.pumpWidget(_wrap(
         const LoadingOverlay(
           isLoading: true,

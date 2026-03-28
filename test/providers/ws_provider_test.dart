@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:agentreservas_conductor/providers/ws_provider.dart';
 import 'package:agentreservas_conductor/services/auth_service.dart';
 import 'package:agentreservas_conductor/services/ws_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 // ── Fake WsService ─────────────────────────────────────────────────────────────
 
@@ -112,7 +112,8 @@ void main() {
       expect(provider.estado, EstadoViajeActivo.enRuta);
     });
 
-    test('si ya está esperandoConfirmacion, viajeIniciado=true NO sobreescribe', () {
+    test('si ya está esperandoConfirmacion, viajeIniciado=true NO sobreescribe',
+        () {
       provider.marcarEnSitio();
       provider.recuperarEstadoDeViaje(viajeIniciado: true, enSitio: false);
       expect(provider.estado, EstadoViajeActivo.esperandoConfirmacionUsuario);
@@ -204,7 +205,8 @@ void main() {
       );
       await Future.delayed(Duration.zero);
       expect(provider.checklistAprobado, true);
-      expect(provider.mensajeChecklistAprobacion, 'Aprobado por el responsable');
+      expect(
+          provider.mensajeChecklistAprobacion, 'Aprobado por el responsable');
     });
 
     test('limpiarChecklistAprobado resetea flags', () async {
@@ -218,7 +220,9 @@ void main() {
 
     // ── Flujo VIAJE_CONFIRMADO (nuevo comportamiento) ───────────────────────
 
-    test('viajeConfirmado desde esperandoConfirmacion → viajeConfirmadoPorSolicitante=true', () async {
+    test(
+        'viajeConfirmado desde esperandoConfirmacion → viajeConfirmadoPorSolicitante=true',
+        () async {
       await conectar();
       provider.marcarEnSitio(); // pasa a esperandoConfirmacionUsuario
       expect(provider.estado, EstadoViajeActivo.esperandoConfirmacionUsuario);
@@ -232,7 +236,8 @@ void main() {
       expect(provider.estado, EstadoViajeActivo.esperandoConfirmacionUsuario);
     });
 
-    test('viajeConfirmado desde esperandoInicio es ignorado (mensaje encolado)', () async {
+    test('viajeConfirmado desde esperandoInicio es ignorado (mensaje encolado)',
+        () async {
       await conectar();
       // NO llamamos marcarEnSitio → estado = esperandoInicio
       fakeWs.injectMessage(WsMensajeTipo.viajeConfirmado);
@@ -279,7 +284,8 @@ void main() {
     test('reinicia viajeConfirmadoPorSolicitante', () async {
       provider.marcarEnSitio();
       // Simular que el flag estaba activo
-      provider.marcarEnSitio(); // Re-marcar (estado ya en esperandoConfirmacion)
+      provider
+          .marcarEnSitio(); // Re-marcar (estado ya en esperandoConfirmacion)
       await provider.conectar(1);
       expect(provider.viajeConfirmadoPorSolicitante, false);
     });

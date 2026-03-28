@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:agentreservas_conductor/config/theme.dart';
 import 'package:agentreservas_conductor/widgets/estado_badge.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget w) => MaterialApp(theme: AppTheme.dark, home: Scaffold(body: w));
+Widget _wrap(Widget w) =>
+    MaterialApp(theme: AppTheme.dark, home: Scaffold(body: w));
 
 // Sin MaterialApp para no incluir FadeTransitions de routing en el árbol
 Widget _wrapSimple(Widget w) => Directionality(
@@ -39,8 +40,7 @@ void main() {
     });
 
     testWidgets('estado desconocido muestra el valor tal cual', (tester) async {
-      await tester.pumpWidget(
-          _wrap(const EstadoBadge(estado: 'ESTADO_RARO')));
+      await tester.pumpWidget(_wrap(const EstadoBadge(estado: 'ESTADO_RARO')));
       expect(find.text('ESTADO_RARO'), findsOneWidget);
     });
   });

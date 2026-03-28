@@ -95,8 +95,8 @@ class WsProvider extends ChangeNotifier {
         notifyListeners();
       case WsMensajeTipo.solicitudCancelada:
         _solicitudCancelada = true;
-        _mensajeCancelacion = msg.data['mensaje'] as String?
-            ?? 'El viaje ha sido cancelado.';
+        _mensajeCancelacion =
+            msg.data['mensaje'] as String? ?? 'El viaje ha sido cancelado.';
         notifyListeners();
       case WsMensajeTipo.aprobacionChecklist:
         _checklistAprobado = true;

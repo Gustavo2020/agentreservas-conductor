@@ -65,8 +65,8 @@ class _SoportesScreenState extends State<SoportesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: AppTheme.onPrimary),
         onPressed: _abrirFormulario,
+        child: const Icon(Icons.add, color: AppTheme.onPrimary),
       ),
       body: Column(
         children: [
@@ -141,8 +141,8 @@ class _SoporteCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '\$${_fmt.format(soporte.monto)}',
-                    style: const TextStyle(
-                        color: AppTheme.primary, fontSize: 16),
+                    style:
+                        const TextStyle(color: AppTheme.primary, fontSize: 16),
                   ),
                 ],
               ),
@@ -207,8 +207,12 @@ class _SoporteFormState extends State<_SoporteForm> {
         _fotoNombre = 'soporte_${DateTime.now().millisecondsSinceEpoch}.jpg';
       });
     } on Exception catch (e, st) {
-      AppLogger.error('SoportesScreen: error al capturar foto', e, stackTrace: st);
-      if (mounted) setState(() => _error = 'No se pudo abrir la cámara. Intenta de nuevo.');
+      AppLogger.error('SoportesScreen: error al capturar foto', e,
+          stackTrace: st);
+      if (mounted) {
+        setState(
+            () => _error = 'No se pudo abrir la cámara. Intenta de nuevo.');
+      }
     } finally {
       if (mounted) setState(() => _capturando = false);
     }
@@ -236,7 +240,10 @@ class _SoporteFormState extends State<_SoporteForm> {
       final trayectos = viaje?.trayectos ?? const <Trayecto>[];
       Trayecto? trayecto;
       for (final t in trayectos) {
-        if (t.diaNumero == widget.diaNumero) { trayecto = t; break; }
+        if (t.diaNumero == widget.diaNumero) {
+          trayecto = t;
+          break;
+        }
       }
       trayecto ??= trayectos.isNotEmpty ? trayectos.first : null;
       final trayectoId = trayecto?.id ?? 1;
@@ -286,13 +293,29 @@ class _SoporteFormState extends State<_SoporteForm> {
         if (mounted) Navigator.of(context).pop();
       }
     } on ApiException catch (e) {
-      AppLogger.error('SoportesScreen: error al guardar soporte', e,
-          context: {'solicitud_id': '${widget.solicitudId}', 'dia': '${widget.diaNumero}'});
-      if (mounted) setState(() { _error = e.message; _guardando = false; });
+      AppLogger.error('SoportesScreen: error al guardar soporte', e, context: {
+        'solicitud_id': '${widget.solicitudId}',
+        'dia': '${widget.diaNumero}'
+      });
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+          _guardando = false;
+        });
+      }
     } on Exception catch (e, st) {
-      AppLogger.error('SoportesScreen: error de red al guardar soporte', e, stackTrace: st,
-          context: {'solicitud_id': '${widget.solicitudId}', 'dia': '${widget.diaNumero}'});
-      if (mounted) setState(() { _error = 'Error de red. Verifica tu conexión e intenta de nuevo.'; _guardando = false; });
+      AppLogger.error('SoportesScreen: error de red al guardar soporte', e,
+          stackTrace: st,
+          context: {
+            'solicitud_id': '${widget.solicitudId}',
+            'dia': '${widget.diaNumero}'
+          });
+      if (mounted) {
+        setState(() {
+          _error = 'Error de red. Verifica tu conexión e intenta de nuevo.';
+          _guardando = false;
+        });
+      }
     }
   }
 
@@ -334,8 +357,7 @@ class _SoporteFormState extends State<_SoporteForm> {
           // Monto
           TextField(
             controller: _montoCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
             ],

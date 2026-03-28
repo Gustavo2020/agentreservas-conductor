@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
+import '../models/checklist.dart';
 import '../models/trayecto.dart';
 import '../models/viaje.dart' show Viajero;
 import '../providers/viaje_provider.dart';
@@ -29,7 +30,9 @@ class _DetalleViajeScreenState extends State<DetalleViajeScreen>
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<ViajeProvider>().cargarDetalleViaje(widget.solicitudId);
+      await context
+          .read<ViajeProvider>()
+          .cargarDetalleViaje(widget.solicitudId);
       if (mounted) {
         final viaje = context.read<ViajeProvider>().viajeActual;
         if (viaje != null && viaje.rutaAceptada) {
@@ -58,9 +61,8 @@ class _DetalleViajeScreenState extends State<DetalleViajeScreen>
 
   Future<void> _aceptarRuta() async {
     setState(() => _aceptando = true);
-    final ok = await context
-        .read<ViajeProvider>()
-        .aceptarRuta(widget.solicitudId);
+    final ok =
+        await context.read<ViajeProvider>().aceptarRuta(widget.solicitudId);
     if (mounted) {
       setState(() {
         _aceptando = false;
@@ -79,8 +81,8 @@ class _DetalleViajeScreenState extends State<DetalleViajeScreen>
         title: Text(viaje?.token ?? 'Detalle del viaje'),
         actions: [
           if (viaje?.esEnCurso == true ||
-            (viaje?.estado == 'APROBADO' &&
-             viaje?.checklist?.aprobado == true))
+              (viaje?.estado == 'APROBADO' &&
+                  viaje?.checklist?.aprobado == true))
             TextButton.icon(
               icon: const Icon(Icons.play_arrow, color: AppTheme.primary),
               label: const Text(
@@ -138,22 +140,23 @@ class _DetalleViajeScreenState extends State<DetalleViajeScreen>
             : viaje == null
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
-                controller: _tabs,
-                children: [
-                  _TabRuta(
-                    trayectos: viaje.trayectos,
-                    viajeros: viaje.viajeros,
-                    rutaAceptada: _rutaAceptada || viaje.estado == 'CANCELADO',
-                    aceptando: _aceptando,
-                    onAceptar: _aceptarRuta,
+                    controller: _tabs,
+                    children: [
+                      _TabRuta(
+                        trayectos: viaje.trayectos,
+                        viajeros: viaje.viajeros,
+                        rutaAceptada:
+                            _rutaAceptada || viaje.estado == 'CANCELADO',
+                        aceptando: _aceptando,
+                        onAceptar: _aceptarRuta,
+                      ),
+                      _TabChecklist(
+                        solicitudId: widget.solicitudId,
+                        checklist: viaje.checklist,
+                      ),
+                      _TabEstado(estado: viaje.estado),
+                    ],
                   ),
-                  _TabChecklist(
-                    solicitudId: widget.solicitudId,
-                    checklist: viaje.checklist,
-                  ),
-                  _TabEstado(estado: viaje.estado),
-                ],
-              ),
       ),
     );
   }
@@ -258,7 +261,7 @@ class _TabRuta extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.success.withOpacity(0.1),
+              color: AppTheme.success.withValues(alpha: 0.1),
               border: Border.all(color: AppTheme.success),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -297,7 +300,7 @@ class _TrayectoTile extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.15),
+              color: AppTheme.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -356,9 +359,11 @@ class _TrayectoTile extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 5),
-                  child: Column(children: List.generate(
-                      3, (_) => const Icon(Icons.more_vert, size: 12,
-                          color: AppTheme.onSurface))),
+                  child: Column(
+                      children: List.generate(
+                          3,
+                          (_) => const Icon(Icons.more_vert,
+                              size: 12, color: AppTheme.onSurface))),
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,20 +402,20 @@ class _TrayectoTile extends StatelessWidget {
 
 class _TabChecklist extends StatelessWidget {
   final int solicitudId;
-  final dynamic checklist;
+  final Checklist? checklist;
 
   const _TabChecklist({required this.solicitudId, required this.checklist});
 
   void _irAChecklist(BuildContext context) {
     Navigator.of(context)
         .push(MaterialPageRoute(
-          builder: (_) => ChecklistScreen(solicitudId: solicitudId),
-        ))
+      builder: (_) => ChecklistScreen(solicitudId: solicitudId),
+    ))
         .then((_) {
-          if (context.mounted) {
-            context.read<ViajeProvider>().cargarDetalleViaje(solicitudId);
-          }
-        });
+      if (context.mounted) {
+        context.read<ViajeProvider>().cargarDetalleViaje(solicitudId);
+      }
+    });
   }
 
   @override
@@ -432,7 +437,7 @@ class _TabChecklist extends StatelessWidget {
       );
     }
 
-    final cl = checklist;
+    final cl = checklist!;
 
     // ── Aprobado ──────────────────────────────────────────────────────────────
     if (cl.aprobado) {
@@ -605,10 +610,11 @@ class _TabEstado extends StatelessWidget {
   }
 
   String _descripcion(String estado) => switch (estado) {
-        'APROBADO'   => 'El viaje está aprobado y listo para iniciar.',
-        'EN_CURSO'   => 'El viaje está en progreso.',
+        'APROBADO' => 'El viaje está aprobado y listo para iniciar.',
+        'EN_CURSO' => 'El viaje está en progreso.',
         'FINALIZADO' => 'El viaje ha sido cerrado exitosamente.',
-        'CANCELADO'  => 'Este viaje fue cancelado. El conductor y vehículo han sido liberados.',
-        _            => 'Estado: $estado',
+        'CANCELADO' =>
+          'Este viaje fue cancelado. El conductor y vehículo han sido liberados.',
+        _ => 'Estado: $estado',
       };
 }

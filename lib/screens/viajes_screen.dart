@@ -1,12 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../config/theme.dart';
 import '../models/viaje.dart';
 import '../providers/auth_provider.dart';
 import '../providers/viaje_provider.dart';
 import '../widgets/estado_badge.dart';
-import 'login_screen.dart';
 import 'detalle_viaje_screen.dart';
+import 'login_screen.dart';
 
 class ViajesScreen extends StatefulWidget {
   const ViajesScreen({super.key});
@@ -27,10 +30,10 @@ class _ViajesScreenState extends State<ViajesScreen> {
   Future<void> _logout() async {
     await context.read<AuthProvider>().logout();
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
+    unawaited(Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,
-    );
+    ));
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
-import '../models/viaje.dart';
+
 import '../models/soporte.dart';
+import '../models/viaje.dart';
 import '../services/api_service.dart';
 
 class ViajeProvider extends ChangeNotifier {
@@ -34,9 +35,8 @@ class ViajeProvider extends ChangeNotifier {
     _error = null;
     try {
       final raw = await _api.getMisViajes();
-      _viajes = raw
-          .map((j) => Viaje.fromJson(j as Map<String, dynamic>))
-          .toList();
+      _viajes =
+          raw.map((j) => Viaje.fromJson(j as Map<String, dynamic>)).toList();
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
@@ -56,13 +56,13 @@ class ViajeProvider extends ChangeNotifier {
       // El endpoint retorna {detalle, trayectos, checklist, cierres, viajeros}
       final detalleJson = {
         ...(data['detalle'] as Map<String, dynamic>? ?? {}),
-        'trayectos':      data['trayectos'],
-        'checklist':      data['checklist'],
-        'viajeros':       data['viajeros'],
-        'ruta_aceptada':  data['ruta_aceptada'],
+        'trayectos': data['trayectos'],
+        'checklist': data['checklist'],
+        'viajeros': data['viajeros'],
+        'ruta_aceptada': data['ruta_aceptada'],
         'viaje_iniciado': data['viaje_iniciado'],
-        'en_sitio':       data['en_sitio'],
-        'cierres':        data['cierres'],
+        'en_sitio': data['en_sitio'],
+        'cierres': data['cierres'],
       };
       _viajeActual = Viaje.fromJson(detalleJson);
     } on ApiException catch (e) {

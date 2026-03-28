@@ -118,12 +118,13 @@ class _FotoGeolocalizadaWidgetState extends State<FotoGeolocalizadaWidget> {
           lat: pos.latitude,
           lng: pos.longitude,
         ),
-        _comentarioCtrl.text.trim().isEmpty ? null : _comentarioCtrl.text.trim(),
+        _comentarioCtrl.text.trim().isEmpty
+            ? null
+            : _comentarioCtrl.text.trim(),
       );
     } on Exception catch (e, st) {
-      AppLogger.error('FotoGeolocalizadaWidget: error capturando foto',
-          e, stackTrace: st,
-          context: {'campo': widget.campoFoto});
+      AppLogger.error('FotoGeolocalizadaWidget: error capturando foto', e,
+          stackTrace: st, context: {'campo': widget.campoFoto});
       if (mounted) setState(() => _error = 'Error capturando foto: $e');
     } finally {
       if (mounted) setState(() => _capturando = false);

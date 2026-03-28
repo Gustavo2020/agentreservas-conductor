@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:agentreservas_conductor/models/soporte.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Soporte.fromJson', () {
@@ -36,18 +36,18 @@ void main() {
 
     test('pendiente/aprobado/rechazado son mutuamente excluyentes', () {
       final pendiente = Soporte.fromJson({...baseJson, 'estado': 'PENDIENTE'});
-      final aprobado  = Soporte.fromJson({...baseJson, 'estado': 'APROBADO'});
+      final aprobado = Soporte.fromJson({...baseJson, 'estado': 'APROBADO'});
       final rechazado = Soporte.fromJson({...baseJson, 'estado': 'RECHAZADO'});
 
       expect(pendiente.pendiente, isTrue);
-      expect(pendiente.aprobado,  isFalse);
+      expect(pendiente.aprobado, isFalse);
       expect(pendiente.rechazado, isFalse);
 
-      expect(aprobado.aprobado,   isTrue);
-      expect(aprobado.pendiente,  isFalse);
+      expect(aprobado.aprobado, isTrue);
+      expect(aprobado.pendiente, isFalse);
 
       expect(rechazado.rechazado, isTrue);
-      expect(rechazado.aprobado,  isFalse);
+      expect(rechazado.aprobado, isFalse);
     });
 
     test('created_at nulo no lanza excepción', () {

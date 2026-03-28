@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:agentreservas_conductor/models/trayecto.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Trayecto.fromJson', () {

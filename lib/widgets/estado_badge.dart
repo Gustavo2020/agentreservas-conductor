@@ -13,7 +13,7 @@ class EstadoBadge extends StatelessWidget {
     final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         border: Border.all(color: color, width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -28,26 +28,26 @@ class EstadoBadge extends StatelessWidget {
     );
 
     if (pulsante) {
-      return _PulsatingBadge(child: badge, color: color);
+      return _PulsatingBadge(color: color, child: badge);
     }
     return badge;
   }
 
   static (Color, String) _info(String estado) => switch (estado) {
-        'APROBADO'   => (AppTheme.success, 'Próximo'),
-        'EN_CURSO'   => (AppTheme.warning, 'En curso'),
+        'APROBADO' => (AppTheme.success, 'Próximo'),
+        'EN_CURSO' => (AppTheme.warning, 'En curso'),
         'FINALIZADO' => (AppTheme.onSurface, 'Finalizado'),
-        'CANCELADO'  => (AppTheme.error, 'Cancelado'),
-        'PENDIENTE'  => (AppTheme.warning, 'Pendiente'),
-        'RECHAZADO'  => (AppTheme.error, 'Rechazado'),
-        _            => (AppTheme.onSurface, estado),
+        'CANCELADO' => (AppTheme.error, 'Cancelado'),
+        'PENDIENTE' => (AppTheme.warning, 'Pendiente'),
+        'RECHAZADO' => (AppTheme.error, 'Rechazado'),
+        _ => (AppTheme.onSurface, estado),
       };
 }
 
 class _PulsatingBadge extends StatefulWidget {
   final Widget child;
   final Color color;
-  const _PulsatingBadge({required this.child, required this.color});
+  const _PulsatingBadge({required this.color, required this.child});
 
   @override
   State<_PulsatingBadge> createState() => _PulsatingBadgeState();

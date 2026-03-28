@@ -41,7 +41,8 @@ class ApiService {
 
   void _checkStatus(http.Response response, String path) {
     if (response.statusCode == 401 || response.statusCode == 403) {
-      final msg = _parseBody(response)['detail'] as String? ?? 'Sin autorización';
+      final msg =
+          _parseBody(response)['detail'] as String? ?? 'Sin autorización';
       AppLogger.warning('ApiService: acceso denegado',
           context: {'path': path, 'status': '${response.statusCode}'});
       throw ApiException(response.statusCode, msg);
@@ -73,8 +74,8 @@ class ApiService {
     } on ApiException {
       rethrow;
     } on Exception catch (e, st) {
-      AppLogger.error('ApiService: timeout o error de red en GET',
-          e, stackTrace: st, context: {'path': path});
+      AppLogger.error('ApiService: timeout o error de red en GET', e,
+          stackTrace: st, context: {'path': path});
       rethrow;
     }
   }
@@ -96,8 +97,8 @@ class ApiService {
     } on ApiException {
       rethrow;
     } on Exception catch (e, st) {
-      AppLogger.error('ApiService: timeout o error de red en POST',
-          e, stackTrace: st, context: {'path': path});
+      AppLogger.error('ApiService: timeout o error de red en POST', e,
+          stackTrace: st, context: {'path': path});
       rethrow;
     }
   }
@@ -134,8 +135,8 @@ class ApiService {
     } on ApiException {
       rethrow;
     } on Exception catch (e, st) {
-      AppLogger.error('ApiService: error en multipart POST',
-          e, stackTrace: st, context: {'path': path});
+      AppLogger.error('ApiService: error en multipart POST', e,
+          stackTrace: st, context: {'path': path});
       rethrow;
     }
   }
@@ -225,10 +226,11 @@ class ApiService {
     required int diaNumero,
     required bool enviarRevision,
   }) async {
-    return post('/api/conductor/viajes/$solicitudId/soportes/cerrar-dia', body: {
-      'dia_numero': diaNumero,
-      'enviar_revision': enviarRevision,
-    });
+    return post('/api/conductor/viajes/$solicitudId/soportes/cerrar-dia',
+        body: {
+          'dia_numero': diaNumero,
+          'enviar_revision': enviarRevision,
+        });
   }
 
   Future<void> cerrarViaje(int solicitudId) async {

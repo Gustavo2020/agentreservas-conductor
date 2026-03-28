@@ -26,14 +26,14 @@ class WsMensaje {
   static WsMensaje fromJson(Map<String, dynamic> json) {
     final tipo = json['tipo'] as String? ?? '';
     final t = switch (tipo) {
-      'CHEQUEO_REQUEST'     => WsMensajeTipo.chequeoRequest,
-      'VIAJE_CONFIRMADO'    => WsMensajeTipo.viajeConfirmado,
-      'APROBACION_CHECKLIST'=> WsMensajeTipo.aprobacionChecklist,
-      'APROBACION_SOPORTE'  => WsMensajeTipo.aprobacionSoporte,
+      'CHEQUEO_REQUEST' => WsMensajeTipo.chequeoRequest,
+      'VIAJE_CONFIRMADO' => WsMensajeTipo.viajeConfirmado,
+      'APROBACION_CHECKLIST' => WsMensajeTipo.aprobacionChecklist,
+      'APROBACION_SOPORTE' => WsMensajeTipo.aprobacionSoporte,
       'SOLICITUD_CANCELADA' => WsMensajeTipo.solicitudCancelada,
-      'VIAJE_FINALIZADO'    => WsMensajeTipo.viajeTerminado,
-      'NOTIFICACION'        => WsMensajeTipo.notificacion,
-      _                     => WsMensajeTipo.desconocido,
+      'VIAJE_FINALIZADO' => WsMensajeTipo.viajeTerminado,
+      'NOTIFICACION' => WsMensajeTipo.notificacion,
+      _ => WsMensajeTipo.desconocido,
     };
     return WsMensaje(t, json);
   }
@@ -54,8 +54,7 @@ class WsService {
   bool _intentionalClose = false;
   int? _solicitudId;
 
-  Stream<WsMensaje> get stream =>
-      _controller?.stream ?? const Stream.empty();
+  Stream<WsMensaje> get stream => _controller?.stream ?? const Stream.empty();
 
   bool get isConnected => _channel != null;
 
@@ -76,8 +75,10 @@ class WsService {
       '${AppConfig.wsBaseUrl}/ws/conductor/$_solicitudId?token=$token',
     );
 
-    AppLogger.info('WsService: conectando',
-        context: {'solicitud_id': '$_solicitudId', 'intento': '$_reconnectAttempts'});
+    AppLogger.info('WsService: conectando', context: {
+      'solicitud_id': '$_solicitudId',
+      'intento': '$_reconnectAttempts'
+    });
 
     try {
       _channel = WebSocketChannel.connect(uri);
@@ -97,8 +98,7 @@ class WsService {
       });
     } on Exception catch (e, st) {
       AppLogger.error('WsService: error al conectar', e,
-          stackTrace: st,
-          context: {'solicitud_id': '$_solicitudId'});
+          stackTrace: st, context: {'solicitud_id': '$_solicitudId'});
       _scheduleReconnect();
     }
   }
@@ -145,12 +145,11 @@ class WsService {
         (1 + _reconnectAttempts).clamp(1, 10).toDouble();
     _reconnectAttempts++;
 
-    AppLogger.warning('WsService: programando reconexión',
-        context: {
-          'solicitud_id': '$_solicitudId',
-          'intento': '$_reconnectAttempts',
-          'delay_ms': '${delay.inMilliseconds}',
-        });
+    AppLogger.warning('WsService: programando reconexión', context: {
+      'solicitud_id': '$_solicitudId',
+      'intento': '$_reconnectAttempts',
+      'delay_ms': '${delay.inMilliseconds}',
+    });
 
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(delay, _doConnect);

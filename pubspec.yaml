@@ -4,7 +4,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.19.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   flutter:
@@ -12,6 +12,7 @@ dependencies:
 
   # HTTP
   http: ^1.2.0
+  http_parser: ^4.0.0
   web_socket_channel: ^2.4.0
 
   # Almacenamiento seguro del JWT
@@ -45,7 +46,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   mocktail: ^1.0.4
-  http: ^1.2.0           # MockClient para tests HTTP
 
 flutter:
   uses-material-design: true

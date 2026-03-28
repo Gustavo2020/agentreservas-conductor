@@ -1,15 +1,17 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+
 import '../config/app_config.dart';
 import '../config/theme.dart';
 import '../providers/viaje_provider.dart';
 import '../providers/ws_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/loading_overlay.dart';
-import 'soportes_screen.dart';
 import 'cierre_dia_screen.dart';
+import 'soportes_screen.dart';
 
 class ViajeActivoScreen extends StatefulWidget {
   final int solicitudId;
@@ -126,7 +128,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       return;
     }
     if (wsProv.solicitudCancelada && mounted) {
-      _mostrarAlertaCancelacion(wsProv.mensajeCancelacion ?? 'El viaje ha sido cancelado.');
+      _mostrarAlertaCancelacion(
+          wsProv.mensajeCancelacion ?? 'El viaje ha sido cancelado.');
       wsProv.limpiarCancelacion();
       return;
     }
@@ -175,8 +178,7 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
 
   void _iniciarGpsParanico() {
     if (_gpsTimer != null) return;
-    _gpsTimer =
-        Timer.periodic(AppConfig.gpsPanicoInterval, (_) async {
+    _gpsTimer = Timer.periodic(AppConfig.gpsPanicoInterval, (_) async {
       try {
         final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
@@ -217,8 +219,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
 
   Future<void> _responderChequeo(String estado) async {
     _chequeoAutoTimer?.cancel();
-    Navigator.of(context, rootNavigator: true).popUntil(
-        (r) => r.isFirst || !r.settings.name!.startsWith('chequeo'));
+    Navigator.of(context, rootNavigator: true)
+        .popUntil((r) => r.isFirst || !r.settings.name!.startsWith('chequeo'));
 
     try {
       final pos = await Geolocator.getCurrentPosition(
@@ -226,12 +228,12 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       ).timeout(const Duration(seconds: 5));
       if (!mounted) return;
       await context.read<ApiService>().registrarChequeo(
-        widget.solicitudId,
-        estado: estado,
-        lat: pos.latitude,
-        lng: pos.longitude,
-        diaNumero: _diaActual,
-      );
+            widget.solicitudId,
+            estado: estado,
+            lat: pos.latitude,
+            lng: pos.longitude,
+            diaNumero: _diaActual,
+          );
     } catch (_) {}
 
     if (!mounted) return;
@@ -251,7 +253,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('El checklist preoperacional debe estar aprobado por el responsable antes de iniciar.'),
+            content: Text(
+                'El checklist preoperacional debe estar aprobado por el responsable antes de iniciar.'),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 4),
           ),
@@ -287,9 +290,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
 
   Future<void> _iniciarViaje() async {
     setState(() => _procesando = true);
-    final ok = await context
-        .read<ViajeProvider>()
-        .iniciarViaje(widget.solicitudId);
+    final ok =
+        await context.read<ViajeProvider>().iniciarViaje(widget.solicitudId);
     if (mounted) {
       setState(() => _procesando = false);
       if (ok) context.read<WsProvider>().marcarViajeIniciado();
@@ -356,8 +358,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
               const SizedBox(height: 24),
               Text(
                 'Esperando que ${solicitante ?? "el solicitante"} confirme el abordaje...',
-                style: const TextStyle(
-                    color: AppTheme.onBackground, fontSize: 16),
+                style:
+                    const TextStyle(color: AppTheme.onBackground, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -365,16 +367,15 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
         ),
       // viajeConfirmado ya no se alcanza: el WS trigger auto-llama _iniciarViaje().
       // Se mantiene en el switch por exhaustividad; muestra spinner de transición.
-      EstadoViajeActivo.viajeConfirmado => Center(
+      EstadoViajeActivo.viajeConfirmado => const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: AppTheme.success),
-              const SizedBox(height: 24),
+              CircularProgressIndicator(color: AppTheme.success),
+              SizedBox(height: 24),
               Text(
                 'Abordaje confirmado. Iniciando viaje...',
-                style: const TextStyle(
-                    color: AppTheme.onBackground, fontSize: 16),
+                style: TextStyle(color: AppTheme.onBackground, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -385,13 +386,13 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
           diaActual: _diaActual,
           onCerrarDia: _abrirCierreDia,
         ),
-      EstadoViajeActivo.esperandoFinalizacion => Center(
+      EstadoViajeActivo.esperandoFinalizacion => const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.hourglass_top, size: 64, color: AppTheme.primary),
-              const SizedBox(height: 16),
-              const Text(
+              Icon(Icons.hourglass_top, size: 64, color: AppTheme.primary),
+              SizedBox(height: 16),
+              Text(
                 'Todos los días enviados a revisión',
                 style: TextStyle(
                     color: AppTheme.onBackground,
@@ -399,8 +400,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
                     fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Esperando que el solicitante apruebe\nla liquidación y cierre el viaje.',
                 style: TextStyle(color: AppTheme.onSurface, fontSize: 14),
                 textAlign: TextAlign.center,
@@ -452,8 +453,7 @@ class _PanelAccion extends StatelessWidget {
           const SizedBox(height: 8),
           Text(descripcion,
               textAlign: TextAlign.center,
-              style:
-                  const TextStyle(color: AppTheme.onSurface, fontSize: 14)),
+              style: const TextStyle(color: AppTheme.onSurface, fontSize: 14)),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
@@ -601,8 +601,8 @@ class _ChequeoBottomSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.error),
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
                   icon: const Icon(Icons.warning),
                   label: const Text('⚠️ Anormal'),
                   onPressed: () {

@@ -19,8 +19,7 @@ class AuthProvider extends ChangeNotifier {
   bool get loading => _loading;
   bool get isAuthenticated => _state == AuthState.authenticated;
 
-  String get conductorNombre =>
-      _userData?['nombre'] as String? ?? 'Conductor';
+  String get conductorNombre => _userData?['nombre'] as String? ?? 'Conductor';
 
   // ── Inicialización ─────────────────────────────────────────────────────────
 

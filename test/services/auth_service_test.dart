@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:flutter_test/flutter_test.dart';
+
+import 'package:agentreservas_conductor/services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:agentreservas_conductor/services/auth_service.dart';
 
 /// Crea un AuthService con storage en memoria (sin Keystore real) y
 /// un MockClient HTTP que responde según la función [handler].
@@ -106,7 +107,8 @@ void main() {
 
   group('AuthService.isLoggedIn / logout', () {
     test('isLoggedIn = false cuando storage vacío', () async {
-      final service = _makeService(handler: (_) async => http.Response('', 200));
+      final service =
+          _makeService(handler: (_) async => http.Response('', 200));
       expect(await service.isLoggedIn(), isFalse);
     });
 
@@ -143,7 +145,8 @@ void main() {
 
   group('AuthService.getUserData', () {
     test('retorna null cuando no hay datos guardados', () async {
-      final service = _makeService(handler: (_) async => http.Response('', 200));
+      final service =
+          _makeService(handler: (_) async => http.Response('', 200));
       expect(await service.getUserData(), isNull);
     });
 

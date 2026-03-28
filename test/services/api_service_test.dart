@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
+
 import 'package:agentreservas_conductor/services/api_service.dart';
 import 'package:agentreservas_conductor/services/auth_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 /// Construye un [ApiService] con token preconfigurado y un handler HTTP mock.
 ApiService _makeApi({
@@ -68,7 +69,8 @@ void main() {
 
       expect(
         () => api.get('/api/conductor/viajes/999'),
-        throwsA(isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404)),
+        throwsA(
+            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404)),
       );
     });
   });
@@ -159,7 +161,8 @@ void main() {
       expect((viajes.first as Map)['token'], 'TRP-001');
     });
 
-    test('cerrarDia envía dia_numero y enviar_revision correctamente', () async {
+    test('cerrarDia envía dia_numero y enviar_revision correctamente',
+        () async {
       final api = _makeApi(
         handler: (req) async {
           final body = jsonDecode(req.body) as Map<String, dynamic>;

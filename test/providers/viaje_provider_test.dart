@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
+
 import 'package:agentreservas_conductor/providers/viaje_provider.dart';
 import 'package:agentreservas_conductor/services/api_service.dart';
 import 'package:agentreservas_conductor/services/auth_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 ApiService _makeApi(Future<http.Response> Function(http.Request) handler) {
   FlutterSecureStorage.setMockInitialValues({'conductor_jwt': 'tok'});
@@ -81,8 +82,12 @@ void main() {
           jsonEncode({
             'detalle': {'id': 5, 'token': 'TRP-005', 'estado': 'EN_CURSO'},
             'trayectos': [
-              {'id': 1, 'dia_numero': 1, 'origen_municipio': 'Bogotá',
-               'destino_municipio': 'Cali'}
+              {
+                'id': 1,
+                'dia_numero': 1,
+                'origen_municipio': 'Bogotá',
+                'destino_municipio': 'Cali'
+              }
             ],
             'checklist': null,
             'cierres': [],
@@ -135,8 +140,12 @@ void main() {
           jsonEncode({
             'soportes': [
               {
-                'id': 1, 'solicitud_viaje_id': 10, 'dia_numero': 1,
-                'tipo': 'PEAJE', 'monto': 8500, 'foto_soporte': 'p.jpg',
+                'id': 1,
+                'solicitud_viaje_id': 10,
+                'dia_numero': 1,
+                'tipo': 'PEAJE',
+                'monto': 8500,
+                'foto_soporte': 'p.jpg',
                 'estado': 'APROBADO',
               },
             ],

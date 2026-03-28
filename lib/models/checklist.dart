@@ -38,8 +38,8 @@ class Checklist {
     return Checklist(
       id: json['id'] as int,
       estado: json['estado'] as String? ?? 'PENDIENTE',
-      enviadoRevision: (json['enviado_revision'] == true ||
-          json['enviado_revision'] == 1),
+      enviadoRevision:
+          (json['enviado_revision'] == true || json['enviado_revision'] == 1),
       llantas: FotoChecklist(
         path: json['foto_llantas'] as String?,
         lat: (json['lat_llantas'] as num?)?.toDouble(),

@@ -1,5 +1,5 @@
-import 'trayecto.dart';
 import 'checklist.dart';
+import 'trayecto.dart';
 
 class Viajero {
   final String nombre;
@@ -8,14 +8,15 @@ class Viajero {
   const Viajero({required this.nombre, this.esSolicitante = false});
 
   factory Viajero.fromJson(Map<String, dynamic> json) {
-    final nombre = (json['nombre_usuario'] as String?)
-        ?? (json['nombre_externo'] as String?)
-        ?? (json['email_usuario'] as String?)
-        ?? (json['email_externo'] as String?)
-        ?? '—';
+    final nombre = (json['nombre_usuario'] as String?) ??
+        (json['nombre_externo'] as String?) ??
+        (json['email_usuario'] as String?) ??
+        (json['email_externo'] as String?) ??
+        '—';
     return Viajero(
       nombre: nombre,
-      esSolicitante: json['es_solicitante'] == 1 || json['es_solicitante'] == true,
+      esSolicitante:
+          json['es_solicitante'] == 1 || json['es_solicitante'] == true,
     );
   }
 }
@@ -32,12 +33,15 @@ class Viaje {
   final Checklist? checklist;
   final List<Viajero> viajeros;
   final bool rutaAceptada;
+
   /// true si existe el evento VIAJE_INICIADO en trazabilidad.
   /// Usar ESTE campo (no `esEnCurso`) para saber si el viaje arrancó,
   /// ya que el backend puede setear EN_CURSO al asignar el vehículo.
   final bool viajeIniciado;
+
   /// true si existe el evento EN_SITIO_RECOGIDA en trazabilidad.
   final bool enSitio;
+
   /// Días ya cerrados por el conductor (dia_numero de cierres_dia_viaje).
   final List<int> diasCerrados;
 
@@ -96,9 +100,10 @@ class Viaje {
               ?.map((v) => Viajero.fromJson(v as Map<String, dynamic>))
               .toList() ??
           [],
-      rutaAceptada:   json['ruta_aceptada']   == true || json['ruta_aceptada']   == 1,
-      viajeIniciado:  json['viaje_iniciado']  == true || json['viaje_iniciado']  == 1,
-      enSitio:        json['en_sitio']        == true || json['en_sitio']        == 1,
+      rutaAceptada: json['ruta_aceptada'] == true || json['ruta_aceptada'] == 1,
+      viajeIniciado:
+          json['viaje_iniciado'] == true || json['viaje_iniciado'] == 1,
+      enSitio: json['en_sitio'] == true || json['en_sitio'] == 1,
       diasCerrados: (json['cierres'] as List<dynamic>?)
               ?.map((c) => (c as Map<String, dynamic>)['dia_numero'] as int)
               .toList() ??

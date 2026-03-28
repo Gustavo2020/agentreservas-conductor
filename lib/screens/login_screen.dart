@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
@@ -33,9 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     if (!mounted) return;
     if (ok) {
-      Navigator.of(context).pushReplacement(
+      unawaited(Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const ViajesScreen()),
-      );
+      ));
     }
   }
 
@@ -137,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppTheme.error.withOpacity(0.1),
+                            color: AppTheme.error.withValues(alpha: 0.1),
                             border: Border.all(color: AppTheme.error),
                             borderRadius: BorderRadius.circular(8),
                           ),
