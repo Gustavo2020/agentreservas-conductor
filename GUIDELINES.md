@@ -303,15 +303,28 @@ try {
 
 ## 6. Calidad de Código
 
-### 6.1 Linter — flutter_lints
+### 6.1 Linter — analysis_options.yaml (estricto desde 2026-03-28)
 
-El análisis estático se ejecuta con `flutter_lints ^3.0.0`.
-Ningún PR puede introducir warnings de linter sin justificación documentada en el PR.
+Se usa un `analysis_options.yaml` con reglas adicionales a `flutter_lints`:
+`prefer_const_constructors`, `avoid_dynamic_calls`, `unawaited_futures`,
+`curly_braces_in_flow_control_structures`, `directives_ordering`, etc.
+Ningún PR puede introducir issues sin justificación documentada.
 
 ```bash
 flutter analyze          # debe terminar en "No issues found!"
+dart format --set-exit-if-changed lib/ test/   # 0 cambios pendientes
 flutter test --no-pub    # debe terminar en "All tests passed!"
 ```
+
+**Orden correcto para fix de lint masivo (Dart):**
+1. `dart format lib/ test/` — auto-fix ~80% de style issues
+2. `flutter analyze` — identificar errores restantes por categoría
+3. Fijar deprecated_member_use (withOpacity→withValues, CardTheme→CardThemeData)
+4. Fijar avoid_dynamic_calls (tipar `dynamic` con la clase correcta)
+5. Fijar unawaited_futures (envolver en `unawaited()` de `dart:async`)
+6. Fijar directives_ordering (ordenar imports: dart: > package: > relative, alfa)
+7. Fijar curly_braces (añadir `{}` a todos los if de 1 línea)
+8. Re-correr `dart format` + `flutter analyze` — debe ser "No issues found!"
 
 ### 6.2 Manejo de Excepciones
 
@@ -476,7 +489,39 @@ Para cambiar de entorno, modificar `AppConfig.baseUrl` y `AppConfig.wsBaseUrl`. 
 
 ---
 
-## 9. Checklist Pre-commit
+## 9. Lecciones Aprendidas
+
+### L1 — Import regex en scripts de sorting debe manejar `as alias`
+
+**Caso:** Un script Python que ordenaba imports de Dart con regex `import\s+'[^']+';` eliminó silenciosamente `import 'package:http/http.dart' as http;` porque el patrón no incluía `as alias` después de la comilla de cierre.
+
+**Regla:** El patrón correcto es:
+```python
+re.compile(r"""^\s*import\s+'[^']+'\s*(?:\s+(?:as|show|hide)\s+[\w\s,]+)?;""")
+```
+Verificar siempre que los imports con alias (`as http`, `show X`, `hide Y`) son preservados.
+
+### L2 — `unawaited()` requiere `dart:async` import explícito
+
+**Caso:** Envolver Navigator calls en `unawaited()` sin añadir `import 'dart:async'` genera "method not defined".
+
+**Regla:** Siempre añadir `import 'dart:async';` al usar `unawaited()`. La línea debe ir en el grupo `dart:` (antes de los `package:`).
+
+### L3 — Compatibilidad Flutter: `CardTheme` vs `CardThemeData`, `withOpacity` vs `withValues`
+
+**Caso:** El patch de compatibilidad cambió `CardThemeData` → `CardTheme` y `withValues` → `withOpacity`. Con Flutter >=3.27 se debe usar `CardThemeData` y `withValues(alpha:)` (el modo retrocompatible genera deprecated warnings).
+
+**Regla:** Actualizar `pubspec.yaml` `flutter: ">=X.Y"` al nivel de APIs usadas. Si el mínimo es >=3.27, usar `CardThemeData` y `.withValues(alpha:)`.
+
+### L4 — `git stash` en proyectos con WIP stash de sesión anterior
+
+**Caso:** El conductor tenía un stash de sesión anterior con trabajo incompleto. Al hacer `git stash pop` se restauró ese trabajo roto (24 errores).
+
+**Regla:** Verificar `git stash list` antes de cualquier `git stash pop`. Si el stash tiene trabajo de sesión anterior desconocido, inspeccionarlo con `git stash show -p stash@{0}` antes de aplicarlo.
+
+---
+
+## 10. Checklist Pre-commit
 
 Antes de abrir un PR, verificar:
 
