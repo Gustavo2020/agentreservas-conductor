@@ -26,6 +26,21 @@ class AppConfig {
   static const String jwtStorageKey = 'conductor_jwt';
   static const String userDataKey = 'conductor_user';
 
+  /// Identificador del aparato enrolado en el servidor. Sobrevive al cierre de
+  /// sesión: cerrar sesión no es perder el segundo factor.
+  static const String dispositivoIdKey = 'conductor_dispositivo_id';
+
+  // ── Segundo factor (llave del aparato) ─────────────────────────────────────
+  /// Alias de la llave ECDSA P-256 en el Keystore. Una por instalación.
+  static const String llaveAlias = 'agentreservas_conductor_llave';
+
+  /// Prefijo que el servidor antepone al reto antes de verificar la firma.
+  /// Debe coincidir con `DOMINIO_FIRMA` de parametrizacion.
+  static const String dominioFirma = 'patrix:conductor:v1:';
+
+  /// Nombre con el que el aparato se presenta al administrador.
+  static const String nombreDispositivo = 'Teléfono Android del conductor';
+
   // ── GPS ────────────────────────────────────────────────────────────────────
   /// Intervalo de envío GPS durante modo pánico (1 segundo)
   static const Duration gpsPanicoInterval = Duration(seconds: 1);

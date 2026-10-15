@@ -182,6 +182,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               : const Text('Iniciar sesión'),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      // Avisa del segundo factor ANTES de que el sistema muestre su
+                      // aviso de huella o PIN, para que no sorprenda.
+                      const Text(
+                        'Después de tu contraseña confirmaremos tu identidad '
+                        'con la huella, el rostro o el PIN de tu teléfono. '
+                        'La primera vez se registra este teléfono.',
+                        textAlign: TextAlign.center,
+                        key: Key('texto_segundo_factor'),
+                        style: TextStyle(
+                          color: AppTheme.onSurface,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -18,6 +18,10 @@ dependencies:
   # Almacenamiento seguro del JWT
   flutter_secure_storage: ^9.0.0
 
+  # Segundo factor: llave ECDSA P-256 en hardware (Keystore/StrongBox), protegida por
+  # huella, rostro o PIN del sistema. La biometria nunca sale del telefono.
+  biometric_signature: ^13.2.0
+
   # Cámara con geolocalización obligatoria
   camera: ^0.10.5
   geolocator: ^11.0.0

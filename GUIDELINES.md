@@ -538,3 +538,16 @@ Antes de abrir un PR, verificar:
 - [ ] Ningún `catch` silencioso — todo error registrado con `AppLogger`
 - [ ] Ningún JWT ni `password` pasado directamente a `AppLogger` sin sanitizar
 - [ ] Cada `AppLogger.error(...)` acompañado de feedback visual al usuario
+
+
+### L5 — El segundo factor se prueba en dos mitades
+La lógica (qué se firma, qué se guarda, qué mensaje ve la persona) se prueba con
+una llave y un servidor simulados; lo que depende del hardware (huella, PIN,
+Keystore) solo se comprueba en un teléfono real. Mantener la llave detrás de una
+interfaz (`FirmaDispositivo`) permite lo primero sin enmascarar lo segundo.
+Antes de dar por terminada una función con biometría, hacer la prueba manual y
+anotarla en el README.
+
+### L6 — Un `dart format` sobre toda la carpeta toca archivos ajenos
+Formatear `lib/` completo reformatea también el trabajo sin commitear de otra
+persona. Formatear solo los archivos propios (`dart format <archivo>`).

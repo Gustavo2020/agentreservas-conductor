@@ -5,6 +5,9 @@
     <!-- Permisos de red -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Segundo factor: huella, rostro o PIN del sistema para firmar con la llave -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <!-- Cámara — foto obligatoria sin galería -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="true" />

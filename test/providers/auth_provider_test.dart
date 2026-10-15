@@ -7,11 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import '../helpers/fake_firma.dart';
+import '../helpers/servidor_falso.dart';
+
 AuthService _makeAuth(Future<http.Response> Function(http.Request) handler) {
   FlutterSecureStorage.setMockInitialValues({});
   return AuthService(
     httpClient: MockClient(handler),
     storage: const FlutterSecureStorage(),
+    firma: FakeFirmaDispositivo(),
   );
 }
 
@@ -63,11 +67,7 @@ void main() {
   group('AuthProvider.login', () {
     test('login exitoso cambia estado a authenticated', () async {
       final auth = _makeAuth(
-        (_) async => http.Response(
-          jsonEncode({'access_token': 'jwt123', 'nombre': 'Pedro'}),
-          200,
-          headers: {'content-type': 'application/json'},
-        ),
+        ServidorFalso(token: 'jwt123', nombre: 'Pedro').manejar,
       );
       final provider = AuthProvider(auth);
 
@@ -98,14 +98,11 @@ void main() {
 
     test('loading es true durante el login y false al terminar', () async {
       bool wasLoading = false;
+      final servidor = ServidorFalso(nombre: 'X');
       final auth = _makeAuth(
-        (_) async {
+        (r) async {
           await Future.delayed(const Duration(milliseconds: 10));
-          return http.Response(
-            jsonEncode({'access_token': 'tok', 'nombre': 'X'}),
-            200,
-            headers: {'content-type': 'application/json'},
-          );
+          return servidor.manejar(r);
         },
       );
       final provider = AuthProvider(auth);
@@ -121,15 +118,28 @@ void main() {
     });
   });
 
+  group('AuthProvider.login con el aparato', () {
+    test('si el usuario cancela la verificación queda sin sesión y con mensaje',
+        () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final auth = AuthService(
+        httpClient: MockClient(ServidorFalso().manejar),
+        storage: const FlutterSecureStorage(),
+        firma: FakeFirmaDispositivo(errorCrear: 'Cancelaste la verificación'),
+      );
+      final provider = AuthProvider(auth);
+
+      final ok = await provider.login('x@geb.com', 'pass');
+
+      expect(ok, isFalse);
+      expect(provider.state, AuthState.unauthenticated);
+      expect(provider.error, 'Cancelaste la verificación');
+    });
+  });
+
   group('AuthProvider.logout', () {
     test('logout limpia estado y vuelve a unauthenticated', () async {
-      final auth = _makeAuth(
-        (_) async => http.Response(
-          jsonEncode({'access_token': 'tok', 'nombre': 'Ana'}),
-          200,
-          headers: {'content-type': 'application/json'},
-        ),
-      );
+      final auth = _makeAuth(ServidorFalso(nombre: 'Ana').manejar);
       final provider = AuthProvider(auth);
       await provider.login('ana@geb.com', 'pass');
       expect(provider.isAuthenticated, isTrue);

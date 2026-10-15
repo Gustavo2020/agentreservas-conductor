@@ -91,3 +91,30 @@ lib/
 - GPS obligatorio para todas las fotos del checklist
 - Modo pánico: GPS enviado cada segundo vía WebSocket al equipo de Seguridad Física
 - Certificate pinning recomendado para producción (configurar en `api_service.dart`)
+
+## Segundo factor: llave del teléfono
+
+El ingreso exige la contraseña **y** una llave guardada en el teléfono. La
+contraseña sola nunca abre sesión.
+
+- **Primer ingreso:** tras validar la contraseña, la app crea una llave ECDSA
+  P-256 en el hardware del teléfono (Keystore/StrongBox), pide huella, rostro o
+  PIN del sistema y registra solo la llave **pública** en el servidor.
+- **Ingresos siguientes:** el servidor envía un reto de un solo uso; la app lo
+  firma (con huella, rostro o PIN) y el servidor verifica la firma.
+- **Cerrar sesión** no borra la llave: el teléfono sigue registrado.
+- **Teléfono perdido o cambiado:** un administrador revoca el aparato desde el
+  panel y el conductor registra el nuevo en su siguiente ingreso.
+
+Implementación: `lib/services/firma_dispositivo.dart` (plugin
+`biometric_signature`, licencia MIT) y `lib/services/auth_service.dart`.
+El mensaje firmado es `patrix:conductor:v1:` + bytes del reto; el prefijo está en
+`AppConfig.dominioFirma` y debe coincidir con `DOMINIO_FIRMA` del servidor.
+
+La biometría nunca sale del teléfono: el servidor solo recibe la firma.
+
+### Pruebas
+
+`flutter test` cubre el flujo con una llave y un servidor simulados. **La prueba
+con biometría real solo se hace en un teléfono**: ingresar con huella y con PIN,
+cancelar el aviso, cambiar de teléfono y revocar desde el panel.
