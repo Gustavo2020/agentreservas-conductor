@@ -138,26 +138,38 @@ class _FotoGeolocalizadaWidgetState extends State<FotoGeolocalizadaWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Miniatura o botón de captura
+        // Comentario siempre visible: el conductor lo escribe ANTES de tomar
+        // la foto para que _tomarFoto() lo capture correctamente al subir.
+        TextField(
+          controller: _comentarioCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Comentario (opcional)',
+            isDense: true,
+          ),
+          maxLines: 2,
+          enabled: !_capturando,
+        ),
+        const SizedBox(height: 8),
+        // Miniatura (check) o botón de captura
         if (tieneFoto) ...[
           Stack(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  height: 120,
+                  height: 80,
                   width: double.infinity,
                   color: AppTheme.surface,
                   child: const Icon(
                     Icons.check_circle,
                     color: AppTheme.success,
-                    size: 48,
+                    size: 40,
                   ),
                 ),
               ),
               Positioned(
-                top: 8,
-                right: 8,
+                top: 6,
+                right: 6,
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -177,14 +189,12 @@ class _FotoGeolocalizadaWidgetState extends State<FotoGeolocalizadaWidget> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _comentarioCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Comentario (opcional)',
-              isDense: true,
-            ),
-            maxLines: 2,
+          const SizedBox(height: 6),
+          // Retomar foto si se equivocó
+          TextButton.icon(
+            onPressed: _capturando ? null : _tomarFoto,
+            icon: const Icon(Icons.camera_alt, size: 16),
+            label: const Text('Retomar foto', style: TextStyle(fontSize: 12)),
           ),
         ] else ...[
           SizedBox(

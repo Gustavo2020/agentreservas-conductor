@@ -75,6 +75,7 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       wsProv.recuperarEstadoDeViaje(
         viajeIniciado: viaje.viajeIniciado,
         enSitio: viaje.enSitio,
+        abordajeConfirmado: viaje.abordajeConfirmado,
       );
     }
   }
@@ -131,6 +132,13 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       _mostrarAlertaCancelacion(
           wsProv.mensajeCancelacion ?? 'El viaje ha sido cancelado.');
       wsProv.limpiarCancelacion();
+      return;
+    }
+    if (wsProv.checklistAprobado && mounted) {
+      wsProv.limpiarChecklistAprobado();
+      // Recargar viaje para que viaje.checklist.aprobado == true y el conductor
+      // pueda presionar "Estoy en el sitio de recogida" sin necesidad de logout.
+      _recuperarEstadoDesdeApi();
       return;
     }
     if (wsProv.viajeConfirmadoPorSolicitante && mounted) {
@@ -361,6 +369,16 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
                 style:
                     const TextStyle(color: AppTheme.onBackground, fontSize: 16),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              // Si el WS perdió el mensaje de confirmación, el conductor puede
+              // refrescar manualmente para que _recuperarEstadoDesdeApi() detecte
+              // abordajeConfirmado=true e inicie el viaje automáticamente.
+              TextButton.icon(
+                onPressed: _recuperarEstadoDesdeApi,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('El pasajero ya confirmó — Refrescar',
+                    style: TextStyle(fontSize: 13)),
               ),
             ],
           ),

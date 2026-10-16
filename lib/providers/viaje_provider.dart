@@ -62,6 +62,7 @@ class ViajeProvider extends ChangeNotifier {
         'ruta_aceptada': data['ruta_aceptada'],
         'viaje_iniciado': data['viaje_iniciado'],
         'en_sitio': data['en_sitio'],
+        'abordaje_confirmado': data['abordaje_confirmado'],
         'cierres': data['cierres'],
       };
       _viajeActual = Viaje.fromJson(detalleJson);

@@ -42,6 +42,9 @@ class Viaje {
   /// true si existe el evento EN_SITIO_RECOGIDA en trazabilidad.
   final bool enSitio;
 
+  /// true si existe el evento ABORDAJE_CONFIRMADO (pasajero confirmó abordaje).
+  final bool abordajeConfirmado;
+
   /// Días ya cerrados por el conductor (dia_numero de cierres_dia_viaje).
   final List<int> diasCerrados;
 
@@ -59,6 +62,7 @@ class Viaje {
     this.rutaAceptada = false,
     this.viajeIniciado = false,
     this.enSitio = false,
+    this.abordajeConfirmado = false,
     this.diasCerrados = const [],
   });
 
@@ -104,6 +108,8 @@ class Viaje {
       viajeIniciado:
           json['viaje_iniciado'] == true || json['viaje_iniciado'] == 1,
       enSitio: json['en_sitio'] == true || json['en_sitio'] == 1,
+      abordajeConfirmado: json['abordaje_confirmado'] == true ||
+          json['abordaje_confirmado'] == 1,
       diasCerrados: (json['cierres'] as List<dynamic>?)
               ?.map((c) => (c as Map<String, dynamic>)['dia_numero'] as int)
               .toList() ??

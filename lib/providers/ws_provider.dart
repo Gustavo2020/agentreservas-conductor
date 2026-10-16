@@ -117,18 +117,36 @@ class WsProvider extends ChangeNotifier {
   /// conductor haya iniciado el viaje realmente.
   ///
   /// Prioridad:
-  ///   1. [viajeIniciado] (evento VIAJE_INICIADO) → enRuta
-  ///   2. [enSitio] (evento EN_SITIO_RECOGIDA)    → esperandoConfirmacionUsuario
-  ///   3. ninguno                                  → esperandoInicio (sin cambio)
+  ///   1. [viajeIniciado]      → enRuta
+  ///   2. [abordajeConfirmado] → dispara viajeConfirmadoPorSolicitante (el screen
+  ///                             llama _iniciarViaje() al ver el flag)
+  ///   3. [enSitio]            → esperandoConfirmacionUsuario
+  ///   4. ninguno              → esperandoInicio (sin cambio)
   void recuperarEstadoDeViaje({
     required bool viajeIniciado,
     required bool enSitio,
+    required bool abordajeConfirmado,
   }) {
-    if (_estado != EstadoViajeActivo.esperandoInicio) return;
+    // Permitir recuperación desde esperandoInicio O esperandoConfirmacionUsuario.
+    // El caso crítico: conductor ya reportó "en sitio" (_estado ==
+    // esperandoConfirmacionUsuario) pero el WS perdió el mensaje VIAJE_CONFIRMADO.
+    // Al pulsar "Refrescar", abordajeConfirmado=true → activar el flag para que
+    // _onWsChange llame _iniciarViaje() automáticamente.
+    final recuperable = _estado == EstadoViajeActivo.esperandoInicio ||
+        _estado == EstadoViajeActivo.esperandoConfirmacionUsuario;
+    if (!recuperable) return;
+
     if (viajeIniciado) {
       _estado = EstadoViajeActivo.enRuta;
       notifyListeners();
-    } else if (enSitio) {
+    } else if (abordajeConfirmado) {
+      // El pasajero confirmó pero el WS no llegó (o el conductor ya estaba
+      // esperando). Forzar el flag para que el screen llame _iniciarViaje().
+      _estado = EstadoViajeActivo.esperandoConfirmacionUsuario;
+      _viajeConfirmadoPorSolicitante = true;
+      notifyListeners();
+    } else if (enSitio && _estado == EstadoViajeActivo.esperandoInicio) {
+      // Solo avanzar a esperandoConfirmacion si aún estamos en esperandoInicio.
       _estado = EstadoViajeActivo.esperandoConfirmacionUsuario;
       notifyListeners();
     }
