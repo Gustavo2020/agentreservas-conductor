@@ -21,6 +21,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
+    <!-- Android 13+: sin este permiso la notificacion del servicio en primer plano no se ve -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Saber si hay red (la cola de posiciones se vacia al volver la senal) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Vibracion al activar el boton de panico -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Mantener el procesador activo mientras se sigue el viaje con la pantalla apagada -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:label="AgentReservas Conductor"
         android:name="${applicationName}"

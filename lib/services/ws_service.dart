@@ -166,8 +166,14 @@ class WsService {
     }
   }
 
-  void sendGps(double lat, double lng) {
-    _send({'tipo': 'GPS', 'lat': lat, 'lng': lng});
+  void sendGps(double lat, double lng, {DateTime? medidaEn}) {
+    // `t`: la hora en que el telefono midio la posicion (milisegundos); es la que se guarda.
+    _send({
+      'tipo': 'GPS',
+      'lat': lat,
+      'lng': lng,
+      't': (medidaEn ?? DateTime.now()).millisecondsSinceEpoch,
+    });
   }
 
   // ── Desconectar ────────────────────────────────────────────────────────────

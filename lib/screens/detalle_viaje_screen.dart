@@ -50,6 +50,18 @@ class _DetalleViajeScreenState extends State<DetalleViajeScreen>
       ws.limpiarChecklistAprobado();
       context.read<ViajeProvider>().cargarDetalleViaje(widget.solicitudId);
     }
+    if (ws.checklistRechazado) {
+      // Rechazado: se dice con el motivo y se recarga para que la pantalla muestre que debe
+      // repetirlo. Antes se confundia con una aprobacion.
+      final motivo = ws.mensajeChecklistRechazo ?? 'Sin motivo indicado.';
+      ws.limpiarChecklistRechazado();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Checklist rechazado: $motivo Repítelo.'),
+        backgroundColor: AppTheme.error,
+        duration: const Duration(seconds: 6),
+      ));
+      context.read<ViajeProvider>().cargarDetalleViaje(widget.solicitudId);
+    }
   }
 
   @override

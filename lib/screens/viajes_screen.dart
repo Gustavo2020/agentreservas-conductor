@@ -7,6 +7,7 @@ import '../config/theme.dart';
 import '../models/viaje.dart';
 import '../providers/auth_provider.dart';
 import '../providers/viaje_provider.dart';
+import '../services/seguimiento_controller.dart';
 import '../widgets/estado_badge.dart';
 import 'detalle_viaje_screen.dart';
 import 'login_screen.dart';
@@ -22,13 +23,29 @@ class _ViajesScreenState extends State<ViajesScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ViajeProvider>().cargarMisViajes();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<ViajeProvider>().cargarMisViajes();
+      _retomarSeguimiento();
     });
   }
 
+  /// Si la app se cerro o se reinicio con un viaje EN CURSO, el seguimiento se retoma al abrirla:
+  /// sin esto, un conductor que reinicia el telefono a mitad de camino quedaria sin rastro hasta
+  /// que entrara a la pantalla del viaje.
+  void _retomarSeguimiento() {
+    if (!mounted) return;
+    final enCurso =
+        context.read<ViajeProvider>().viajes.where((v) => v.esEnCurso);
+    if (enCurso.isEmpty) return;
+    unawaited(context.read<SeguimientoController>().iniciar(enCurso.first.id));
+  }
+
   Future<void> _logout() async {
-    await context.read<AuthProvider>().logout();
+    // Cerrar sesion detiene el seguimiento: ya no es este conductor quien lleva el telefono.
+    final seguimiento = context.read<SeguimientoController>();
+    final auth = context.read<AuthProvider>();
+    await seguimiento.detener();
+    await auth.logout();
     if (!mounted) return;
     unawaited(Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),

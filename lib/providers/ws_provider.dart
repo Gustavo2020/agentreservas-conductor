@@ -23,6 +23,11 @@ class WsProvider extends ChangeNotifier {
   String? _mensajeCancelacion;
   bool _checklistAprobado = false;
   String? _mensajeChecklistAprobacion;
+  // La decision del revisor puede ser RECHAZAR: el aviso es el mismo mensaje con otro `estado`.
+  // Tratar todo aviso como una aprobacion le decia al conductor que podia salir con un checklist
+  // rechazado.
+  bool _checklistRechazado = false;
+  String? _mensajeChecklistRechazo;
   bool _viajeConfirmadoPorSolicitante = false;
   bool _viajeTerminado = false;
   StreamSubscription<WsMensaje>? _sub;
@@ -33,6 +38,8 @@ class WsProvider extends ChangeNotifier {
   bool get solicitudCancelada => _solicitudCancelada;
   String? get mensajeCancelacion => _mensajeCancelacion;
   bool get checklistAprobado => _checklistAprobado;
+  bool get checklistRechazado => _checklistRechazado;
+  String? get mensajeChecklistRechazo => _mensajeChecklistRechazo;
   String? get mensajeChecklistAprobacion => _mensajeChecklistAprobacion;
   bool get viajeConfirmadoPorSolicitante => _viajeConfirmadoPorSolicitante;
   bool get viajeTerminado => _viajeTerminado;
@@ -46,6 +53,12 @@ class WsProvider extends ChangeNotifier {
   void limpiarChecklistAprobado() {
     _checklistAprobado = false;
     _mensajeChecklistAprobacion = null;
+    notifyListeners();
+  }
+
+  void limpiarChecklistRechazado() {
+    _checklistRechazado = false;
+    _mensajeChecklistRechazo = null;
     notifyListeners();
   }
 
@@ -99,8 +112,16 @@ class WsProvider extends ChangeNotifier {
             msg.data['mensaje'] as String? ?? 'El viaje ha sido cancelado.';
         notifyListeners();
       case WsMensajeTipo.aprobacionChecklist:
-        _checklistAprobado = true;
-        _mensajeChecklistAprobacion = msg.data['mensaje'] as String?;
+        // `estado` es APROBADO o RECHAZADO (lo manda el servidor); sin él, por compatibilidad con
+        // avisos antiguos, se toma como aprobado.
+        final estado = msg.data['estado'] as String? ?? 'APROBADO';
+        if (estado == 'RECHAZADO') {
+          _checklistRechazado = true;
+          _mensajeChecklistRechazo = msg.data['mensaje'] as String?;
+        } else {
+          _checklistAprobado = true;
+          _mensajeChecklistAprobacion = msg.data['mensaje'] as String?;
+        }
         notifyListeners();
       default:
         break;

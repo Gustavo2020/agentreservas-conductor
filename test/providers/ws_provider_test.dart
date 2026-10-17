@@ -87,36 +87,45 @@ void main() {
 
   group('recuperarEstadoDeViaje', () {
     test('viajeIniciado=true → estado enRuta', () {
-      provider.recuperarEstadoDeViaje(viajeIniciado: true, enSitio: false);
+      provider.recuperarEstadoDeViaje(
+          viajeIniciado: true, enSitio: false, abordajeConfirmado: false);
       expect(provider.estado, EstadoViajeActivo.enRuta);
     });
 
     test('enSitio=true sin viajeIniciado → esperandoConfirmacionUsuario', () {
-      provider.recuperarEstadoDeViaje(viajeIniciado: false, enSitio: true);
+      provider.recuperarEstadoDeViaje(
+          viajeIniciado: false, enSitio: true, abordajeConfirmado: false);
       expect(provider.estado, EstadoViajeActivo.esperandoConfirmacionUsuario);
     });
 
     test('ambos false → sin cambio (queda esperandoInicio)', () {
-      provider.recuperarEstadoDeViaje(viajeIniciado: false, enSitio: false);
+      provider.recuperarEstadoDeViaje(
+          viajeIniciado: false, enSitio: false, abordajeConfirmado: false);
       expect(provider.estado, EstadoViajeActivo.esperandoInicio);
     });
 
     test('viajeIniciado=true tiene precedencia sobre enSitio=true', () {
-      provider.recuperarEstadoDeViaje(viajeIniciado: true, enSitio: true);
+      provider.recuperarEstadoDeViaje(
+          viajeIniciado: true, enSitio: true, abordajeConfirmado: false);
       expect(provider.estado, EstadoViajeActivo.enRuta);
     });
 
     test('si ya está enRuta, viajeIniciado=false no sobreescribe', () {
       provider.marcarViajeIniciado();
-      provider.recuperarEstadoDeViaje(viajeIniciado: false, enSitio: false);
+      provider.recuperarEstadoDeViaje(
+          viajeIniciado: false, enSitio: false, abordajeConfirmado: false);
       expect(provider.estado, EstadoViajeActivo.enRuta);
     });
 
-    test('si ya está esperandoConfirmacion, viajeIniciado=true NO sobreescribe',
+    test(
+        'esperando confirmacion + el viaje ya inicio (la app se reinicio) → enRuta',
         () {
+      // Antes este caso no se recuperaba y el conductor quedaba en una pantalla vieja mientras
+      // el servidor ya lo tenia en ruta (y siguiendolo).
       provider.marcarEnSitio();
-      provider.recuperarEstadoDeViaje(viajeIniciado: true, enSitio: false);
-      expect(provider.estado, EstadoViajeActivo.esperandoConfirmacionUsuario);
+      provider.recuperarEstadoDeViaje(
+          viajeIniciado: true, enSitio: false, abordajeConfirmado: false);
+      expect(provider.estado, EstadoViajeActivo.enRuta);
     });
   });
 
@@ -207,6 +216,34 @@ void main() {
       expect(provider.checklistAprobado, true);
       expect(
           provider.mensajeChecklistAprobacion, 'Aprobado por el responsable');
+    });
+
+    test('aprobacionChecklist con estado RECHAZADO → rechazado, NO aprobado',
+        () async {
+      await conectar();
+      fakeWs.injectMessage(
+        WsMensajeTipo.aprobacionChecklist,
+        data: {'estado': 'RECHAZADO', 'mensaje': 'Llanta delantera borrosa'},
+      );
+      await Future.delayed(Duration.zero);
+      // Antes este aviso se leia como aprobacion y el conductor creia poder salir.
+      expect(provider.checklistAprobado, false);
+      expect(provider.checklistRechazado, true);
+      expect(provider.mensajeChecklistRechazo, 'Llanta delantera borrosa');
+      provider.limpiarChecklistRechazado();
+      expect(provider.checklistRechazado, false);
+      expect(provider.mensajeChecklistRechazo, null);
+    });
+
+    test('aprobacionChecklist con estado APROBADO sigue aprobando', () async {
+      await conectar();
+      fakeWs.injectMessage(
+        WsMensajeTipo.aprobacionChecklist,
+        data: {'estado': 'APROBADO', 'mensaje': 'Aprobado'},
+      );
+      await Future.delayed(Duration.zero);
+      expect(provider.checklistAprobado, true);
+      expect(provider.checklistRechazado, false);
     });
 
     test('limpiarChecklistAprobado resetea flags', () async {

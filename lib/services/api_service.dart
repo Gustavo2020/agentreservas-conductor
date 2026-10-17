@@ -178,6 +178,27 @@ class ApiService {
     await post('/api/conductor/viajes/$solicitudId/iniciar-viaje');
   }
 
+  /// Manda un lote de posiciones medidas por el teléfono (cada una con su hora de medida `t`).
+  /// Lo usa la cola local al volver la señal. El servidor decide cuáles guarda.
+  Future<Map<String, dynamic>> enviarPosiciones(
+    int solicitudId,
+    List<Map<String, dynamic>> puntos,
+  ) async {
+    return post('/api/conductor/viajes/$solicitudId/posiciones',
+        body: {'puntos': puntos});
+  }
+
+  /// El botón de pánico por HTTP: el respaldo del WebSocket (no depende de que el socket esté
+  /// abierto). La posición es obligatoria: una alarma sin lugar no dice a dónde enviar ayuda.
+  Future<Map<String, dynamic>> pulsarPanico(
+    int solicitudId, {
+    required double lat,
+    required double lng,
+  }) async {
+    return post('/api/conductor/viajes/$solicitudId/panico',
+        body: {'lat': lat, 'lng': lng});
+  }
+
   Future<Map<String, dynamic>> registrarChequeo(
     int solicitudId, {
     required String estado,

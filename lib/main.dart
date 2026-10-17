@@ -6,9 +6,16 @@ import 'providers/viaje_provider.dart';
 import 'providers/ws_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/viajes_screen.dart';
+import 'services/almacen_prefs.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'services/cola_posiciones.dart';
+import 'services/envios_seguimiento.dart';
+import 'services/flujo_geolocator.dart';
 import 'services/log_service.dart';
+import 'services/panico_service.dart';
+import 'services/seguimiento_controller.dart';
+import 'services/seguimiento_service.dart';
 import 'services/ws_service.dart';
 
 Future<void> main() async {
@@ -30,12 +37,23 @@ class AgentReservasConductorApp extends StatelessWidget {
     final authService = AuthService();
     final apiService = ApiService(authService);
     final wsService = WsService(authService);
+    // El seguimiento y el panico viven a nivel de la app, no de una pantalla: el conductor puede
+    // salir de la pantalla del viaje (o minimizar la app) y el seguimiento debe continuar.
+    final seguimiento = SeguimientoController(
+      seguimiento: SeguimientoService(
+        cola: ColaPosiciones(AlmacenPrefs()),
+        abrirFlujo: flujoGeolocator,
+        enviarLote: lotePorHttp(apiService),
+      ),
+      panico: PanicoService(enviar: panicoPorHttp(apiService)),
+    );
 
     return MultiProvider(
       providers: [
         Provider<AuthService>.value(value: authService),
         Provider<ApiService>.value(value: apiService),
         Provider<WsService>.value(value: wsService),
+        Provider<SeguimientoController>.value(value: seguimiento),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(authService),
         ),

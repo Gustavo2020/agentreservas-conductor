@@ -9,6 +9,9 @@ import '../config/theme.dart';
 import '../providers/viaje_provider.dart';
 import '../providers/ws_provider.dart';
 import '../services/api_service.dart';
+import '../services/panico_service.dart';
+import '../services/seguimiento_controller.dart';
+import '../widgets/boton_panico.dart';
 import '../widgets/loading_overlay.dart';
 import 'cierre_dia_screen.dart';
 import 'soportes_screen.dart';
@@ -26,6 +29,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
   Timer? _chequeoAutoTimer;
   bool _procesando = false;
   int _diaActual = 1;
+  // El seguimiento ya se pidio para este viaje: no se vuelve a pedir en cada cambio del socket.
+  bool _seguimientoPedido = false;
 
   @override
   void initState() {
@@ -149,13 +154,92 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       });
       return;
     }
+    if (wsProv.checklistRechazado && mounted) {
+      // El revisor rechazo el checklist: el conductor debe repetirlo. Antes este aviso se leia como
+      // una aprobacion y no decia nada.
+      final motivo = wsProv.mensajeChecklistRechazo ?? 'Sin motivo indicado.';
+      wsProv.limpiarChecklistRechazado();
+      _avisar('Checklist rechazado: $motivo Repítelo.', error: true);
+      _recuperarEstadoDesdeApi();
+      return;
+    }
     if (wsProv.chequeoSolicitado && mounted) {
       _mostrarBottomSheetChequeo();
     }
+    _ajustarSeguimiento(wsProv.estado);
     if (wsProv.enModoPanico) {
       _iniciarGpsParanico();
     } else {
       _detenerGpsPanico();
+    }
+  }
+
+  // ── Seguimiento y pánico ───────────────────────────────────────────────────
+
+  void _avisar(String texto, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(texto),
+      backgroundColor: error ? AppTheme.error : AppTheme.success,
+      duration: const Duration(seconds: 6),
+    ));
+  }
+
+  /// El viaje en ruta se sigue (también con la app en segundo plano); al esperar la
+  /// finalización ya no hace falta. Dejar la pantalla NO lo detiene: sigue hasta que el viaje
+  /// termine, para que operaciones no pierda al vehículo si el conductor cambia de pantalla.
+  void _ajustarSeguimiento(EstadoViajeActivo estado) {
+    final enMarcha = estado == EstadoViajeActivo.enRuta ||
+        estado == EstadoViajeActivo.modoPanico;
+    if (enMarcha && !_seguimientoPedido) {
+      _seguimientoPedido = true;
+      _arrancarSeguimiento();
+    } else if (estado == EstadoViajeActivo.esperandoFinalizacion &&
+        _seguimientoPedido) {
+      _seguimientoPedido = false;
+      context.read<SeguimientoController>().detener();
+    }
+  }
+
+  Future<void> _arrancarSeguimiento() async {
+    final r =
+        await context.read<SeguimientoController>().iniciar(widget.solicitudId);
+    if (r == ArranqueSeguimiento.activo) return;
+    // No se pudo: se dice por que y se permite reintentar al cambiar de estado.
+    _seguimientoPedido = false;
+    _avisar(
+      r == ArranqueSeguimiento.sinPermiso
+          ? 'Activa el permiso de ubicación de la app para que operaciones vea tu viaje.'
+          : 'Enciende el GPS del teléfono para que operaciones vea tu viaje.',
+      error: true,
+    );
+  }
+
+  Future<void> _pulsarPanico() async {
+    final r = await context
+        .read<SeguimientoController>()
+        .pulsarPanico(widget.solicitudId);
+    if (!mounted) return;
+    switch (r) {
+      case ResultadoPanico.confirmado:
+        context.read<WsProvider>().activarModoPanico();
+        _avisar('Ayuda solicitada. Operaciones fue avisada.');
+      case ResultadoPanico.reintentar:
+        // Sin señal: el aviso se reintenta solo hasta que llegue; el conductor no debe volver a
+        // pulsar ni quedarse mirando.
+        context.read<WsProvider>().activarModoPanico();
+        _avisar(
+            'Sin señal: tu pedido de ayuda se envía solo apenas haya conexión.');
+      case ResultadoPanico.rechazado:
+        _avisar(
+          'No se pudo pedir ayuda: el viaje ya no está en curso. Llama a operaciones.',
+          error: true,
+        );
+      case null:
+        _avisar(
+          'Sin ubicación: sal a cielo abierto, enciende el GPS y vuelve a pulsar.',
+          error: true,
+        );
     }
   }
 
@@ -403,6 +487,7 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
           solicitudId: widget.solicitudId,
           diaActual: _diaActual,
           onCerrarDia: _abrirCierreDia,
+          onPanico: _pulsarPanico,
         ),
       EstadoViajeActivo.esperandoFinalizacion => const Center(
           child: Column(
@@ -491,10 +576,12 @@ class _PanelEnRuta extends StatelessWidget {
   final int solicitudId;
   final int diaActual;
   final VoidCallback onCerrarDia;
+  final Future<void> Function() onPanico;
   const _PanelEnRuta({
     required this.solicitudId,
     required this.diaActual,
     required this.onCerrarDia,
+    required this.onPanico,
   });
 
   @override
@@ -530,6 +617,10 @@ class _PanelEnRuta extends StatelessWidget {
           label: const Text('🔚 Cerrar día'),
           onPressed: onCerrarDia,
         ),
+        const Spacer(),
+        // Abajo y grande: se alcanza con el pulgar sin mirar, y lejos de los demás botones para
+        // que no se active por error.
+        BotonPanico(onActivar: onPanico),
       ],
     );
   }
