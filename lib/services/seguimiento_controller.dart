@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'log_service.dart';
 import 'panico_service.dart';
 import 'seguimiento_service.dart';
+import 'ubicacion_fuente.dart';
 
 /// Qué pasó al pedir el seguimiento del viaje.
 enum ArranqueSeguimiento { activo, sinPermiso, sinGps }
@@ -12,6 +13,7 @@ enum ArranqueSeguimiento { activo, sinPermiso, sinGps }
 class SeguimientoController {
   final SeguimientoService seguimiento;
   final PanicoService panico;
+  final UbicacionFuente ubicacion;
   final Future<LocationPermission> Function() pedirPermiso;
   final Future<bool> Function() gpsEncendido;
   final Future<MuestraGps?> Function() posicionAhora;
@@ -19,39 +21,20 @@ class SeguimientoController {
   SeguimientoController({
     required this.seguimiento,
     required this.panico,
+    this.ubicacion = const UbicacionReal(),
     Future<LocationPermission> Function()? pedirPermiso,
     Future<bool> Function()? gpsEncendido,
     Future<MuestraGps?> Function()? posicionAhora,
-  })  : pedirPermiso = pedirPermiso ?? _permisoReal,
-        gpsEncendido = gpsEncendido ?? Geolocator.isLocationServiceEnabled,
-        posicionAhora = posicionAhora ?? _posicionReal;
-
-  static Future<LocationPermission> _permisoReal() async {
-    var p = await Geolocator.checkPermission();
-    if (p == LocationPermission.denied) {
-      p = await Geolocator.requestPermission();
-    }
-    return p;
-  }
-
-  static Future<MuestraGps?> _posicionReal() async {
-    try {
-      final p = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 4),
-      );
-      return MuestraGps(p.latitude, p.longitude, p.timestamp);
-    } on Object {
-      final u = await Geolocator.getLastKnownPosition();
-      return u == null
-          ? null
-          : MuestraGps(u.latitude, u.longitude, u.timestamp);
-    }
-  }
+  })  : pedirPermiso = pedirPermiso ?? ubicacion.pedirPermiso,
+        gpsEncendido = gpsEncendido ?? ubicacion.gpsEncendido,
+        posicionAhora = posicionAhora ?? ubicacion.posicionAhora;
 
   /// Empieza a seguir el viaje. Sin permiso o con el GPS apagado no se puede: se dice, para que la
   /// pantalla le pida al conductor que lo active (no se falla en silencio).
   Future<ArranqueSeguimiento> iniciar(int solicitudId) async {
+    // Demo: las posiciones las genera el servidor. No se abre el flujo del GPS, ni se piden
+    // permisos de ubicación, ni se muestra la notificación de «compartiendo ubicación».
+    if (ubicacion.esDemo) return ArranqueSeguimiento.activo;
     final permiso = await pedirPermiso();
     if (permiso == LocationPermission.denied ||
         permiso == LocationPermission.deniedForever) {

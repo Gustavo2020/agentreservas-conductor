@@ -4,4 +4,6 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Solo desarrollo: http://localhost / 10.0.2.2 (adb reverse). Release usa solo HTTPS/WSS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

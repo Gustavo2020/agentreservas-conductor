@@ -1,9 +1,19 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../config/theme.dart';
+import '../services/captura_foto.dart';
 import '../services/log_service.dart';
+import '../services/ubicacion_fuente.dart';
+
+/// Textos de la captura de fotos (centralizados para aprobación).
+class TextosFoto {
+  TextosFoto._();
+
+  static const String elegirGaleria = 'Elegir de la galería (demo)';
+}
 
 /// Resultado de captura de foto con geolocalización obligatoria.
 class FotoGeoResult {
@@ -58,52 +68,44 @@ class _FotoGeolocalizadaWidgetState extends State<FotoGeolocalizadaWidget> {
     super.dispose();
   }
 
-  Future<void> _tomarFoto() async {
+  Future<void> _tomarFoto({bool soloGaleria = false}) async {
     setState(() {
       _capturando = true;
       _error = null;
     });
 
     try {
-      // 1. Permiso de cámara
-      final camPerm = ImagePicker().supportsImageSource(ImageSource.camera);
-      if (!camPerm) {
-        setState(() => _error = 'La cámara no está disponible');
-        return;
-      }
+      final ubicacion = context.read<UbicacionFuente>();
+      final demo = ubicacion.esDemo;
 
-      // 2. Permiso de ubicación
-      var locPerm = await Geolocator.checkPermission();
-      if (locPerm == LocationPermission.denied) {
-        locPerm = await Geolocator.requestPermission();
-      }
+      // 1. Permiso de ubicación (en demo no se pide: la posición es la del viaje simulado)
+      final locPerm = await ubicacion.pedirPermiso();
       if (locPerm == LocationPermission.denied ||
           locPerm == LocationPermission.deniedForever) {
         setState(() => _error = 'Se requieren permisos de ubicación');
         return;
       }
 
-      // 3. GPS activo
-      final gpsActivo = await Geolocator.isLocationServiceEnabled();
-      if (!gpsActivo) {
+      // 2. GPS activo
+      if (!await ubicacion.gpsEncendido()) {
         setState(() => _error = 'Se requiere GPS activo');
         return;
       }
 
-      // 4. Obtener posición
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 15),
+      // 3. Obtener posición
+      final pos = await ubicacion.posicionAhora(
+        limite: const Duration(seconds: 15),
       );
+      if (pos == null) {
+        setState(() => _error = 'No se pudo obtener la ubicación');
+        return;
+      }
       if (!mounted) return;
 
-      // 5. Capturar foto SOLO con cámara
-      final picker = ImagePicker();
-      final xFile = await picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-        maxWidth: 1920,
-        maxHeight: 1080,
+      // 4. Capturar foto SOLO con cámara (en demo, galería si no hay cámara)
+      final xFile = await capturarFoto(
+        permitirGaleria: demo,
+        soloGaleria: soloGaleria,
       );
       if (xFile == null || !mounted) return;
 
@@ -115,8 +117,8 @@ class _FotoGeolocalizadaWidgetState extends State<FotoGeolocalizadaWidget> {
         FotoGeoResult(
           bytes: bytes,
           filename: filename,
-          lat: pos.latitude,
-          lng: pos.longitude,
+          lat: pos.lat,
+          lng: pos.lng,
         ),
         _comentarioCtrl.text.trim().isEmpty
             ? null
@@ -212,6 +214,14 @@ class _FotoGeolocalizadaWidgetState extends State<FotoGeolocalizadaWidget> {
             ),
           ),
         ],
+        if (AppConfig.modoDemo)
+          TextButton.icon(
+            key: const Key('boton_foto_galeria'),
+            onPressed: _capturando ? null : () => _tomarFoto(soloGaleria: true),
+            icon: const Icon(Icons.photo_library, size: 16),
+            label: const Text(TextosFoto.elegirGaleria,
+                style: TextStyle(fontSize: 12)),
+          ),
         if (_error != null) ...[
           const SizedBox(height: 4),
           Text(

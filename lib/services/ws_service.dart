@@ -14,6 +14,8 @@ enum WsMensajeTipo {
   solicitudCancelada,
   viajeTerminado,
   notificacion,
+  tramoProhibido,
+  posicionVehiculo,
   desconocido,
 }
 
@@ -33,6 +35,8 @@ class WsMensaje {
       'SOLICITUD_CANCELADA' => WsMensajeTipo.solicitudCancelada,
       'VIAJE_FINALIZADO' => WsMensajeTipo.viajeTerminado,
       'NOTIFICACION' => WsMensajeTipo.notificacion,
+      'TRAMO_PROHIBIDO' => WsMensajeTipo.tramoProhibido,
+      'POSICION_VEHICULO' || 'POSICION' => WsMensajeTipo.posicionVehiculo,
       _ => WsMensajeTipo.desconocido,
     };
     return WsMensaje(t, json);

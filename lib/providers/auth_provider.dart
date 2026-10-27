@@ -57,6 +57,28 @@ class AuthProvider extends ChangeNotifier {
     return result.success;
   }
 
+  /// Modo demo: enlaza con el código de 6 dígitos del panel.
+  Future<bool> loginDemo(String codigo) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    final result = await _authService.loginDemo(codigo);
+    _loading = false;
+
+    if (result.success) {
+      _userData = result.userData;
+      _state = AuthState.authenticated;
+      _error = null;
+    } else {
+      _error = result.error;
+      _state = AuthState.unauthenticated;
+    }
+
+    notifyListeners();
+    return result.success;
+  }
+
   void forceUnauthenticated() {
     _state = AuthState.unauthenticated;
     notifyListeners();

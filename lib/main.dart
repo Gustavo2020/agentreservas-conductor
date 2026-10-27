@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'config/app_config.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/viaje_provider.dart';
 import 'providers/ws_provider.dart';
+import 'screens/codigo_enlace_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/viajes_screen.dart';
 import 'services/almacen_prefs.dart';
@@ -11,12 +13,13 @@ import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'services/cola_posiciones.dart';
 import 'services/envios_seguimiento.dart';
-import 'services/flujo_geolocator.dart';
 import 'services/log_service.dart';
 import 'services/panico_service.dart';
 import 'services/seguimiento_controller.dart';
 import 'services/seguimiento_service.dart';
+import 'services/ubicacion_fuente.dart';
 import 'services/ws_service.dart';
+import 'widgets/banda_demo.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,10 +42,15 @@ class AgentReservasConductorApp extends StatelessWidget {
     final wsService = WsService(authService);
     // El seguimiento y el panico viven a nivel de la app, no de una pantalla: el conductor puede
     // salir de la pantalla del viaje (o minimizar la app) y el seguimiento debe continuar.
+    // Demo: la posición del vehículo la manda el servidor; no se usa el GPS del teléfono.
+    final simulada = PosicionSimulada();
+    final UbicacionFuente ubicacion =
+        AppConfig.modoDemo ? UbicacionDemo(simulada) : const UbicacionReal();
     final seguimiento = SeguimientoController(
+      ubicacion: ubicacion,
       seguimiento: SeguimientoService(
         cola: ColaPosiciones(AlmacenPrefs()),
-        abrirFlujo: flujoGeolocator,
+        abrirFlujo: ubicacion.flujo,
         enviarLote: lotePorHttp(apiService),
       ),
       panico: PanicoService(enviar: panicoPorHttp(apiService)),
@@ -53,6 +61,7 @@ class AgentReservasConductorApp extends StatelessWidget {
         Provider<AuthService>.value(value: authService),
         Provider<ApiService>.value(value: apiService),
         Provider<WsService>.value(value: wsService),
+        Provider<UbicacionFuente>.value(value: ubicacion),
         Provider<SeguimientoController>.value(value: seguimiento),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(authService),
@@ -61,13 +70,15 @@ class AgentReservasConductorApp extends StatelessWidget {
           create: (_) => ViajeProvider(apiService),
         ),
         ChangeNotifierProvider(
-          create: (_) => WsProvider(wsService),
+          create: (_) => WsProvider(wsService, simulada: simulada),
         ),
       ],
       child: MaterialApp(
-        title: 'AgentReservas Conductor',
+        title: AppConfig.modoDemo ? 'Viasofia Demo' : 'AgentReservas Conductor',
         theme: AppTheme.dark,
         debugShowCheckedModeBanner: false,
+        builder: (context, child) =>
+            BandaDemo(child: child ?? const SizedBox()),
         home: const _SplashGate(),
       ),
     );
@@ -108,7 +119,8 @@ class _SplashGateState extends State<_SplashGate> {
           ),
         ),
       AuthState.authenticated => const ViajesScreen(),
-      AuthState.unauthenticated => const LoginScreen(),
+      AuthState.unauthenticated =>
+        AppConfig.modoDemo ? const CodigoEnlaceScreen() : const LoginScreen(),
     };
   }
 }

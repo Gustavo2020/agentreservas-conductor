@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
@@ -11,10 +10,23 @@ import '../providers/ws_provider.dart';
 import '../services/api_service.dart';
 import '../services/panico_service.dart';
 import '../services/seguimiento_controller.dart';
+import '../services/ubicacion_fuente.dart';
 import '../widgets/boton_panico.dart';
 import '../widgets/loading_overlay.dart';
+import '../widgets/panel_posicion_demo.dart';
 import 'cierre_dia_screen.dart';
 import 'soportes_screen.dart';
+
+/// Textos del aviso de tramo prohibido (centralizados para aprobación).
+class TextosViaje {
+  TextosViaje._();
+
+  static const String tramoProhibido =
+      'Entraste a un tramo prohibido. Sal de la vía y comunícate con operaciones';
+  static const String tituloTramoProhibido = 'Tramo prohibido';
+  static const String rutaPermitida = 'Ruta permitida';
+  static const String entendido = 'Entendido';
+}
 
 class ViajeActivoScreen extends StatefulWidget {
   final int solicitudId;
@@ -163,6 +175,14 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       _recuperarEstadoDesdeApi();
       return;
     }
+    if (wsProv.tramoProhibido && mounted) {
+      final mensaje =
+          wsProv.mensajeTramoProhibido ?? TextosViaje.tramoProhibido;
+      final alternativa = wsProv.alternativaTramo;
+      wsProv.limpiarTramoProhibido();
+      _mostrarAlertaTramoProhibido(mensaje, alternativa);
+      return;
+    }
     if (wsProv.chequeoSolicitado && mounted) {
       _mostrarBottomSheetChequeo();
     }
@@ -266,17 +286,44 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
     );
   }
 
+  void _mostrarAlertaTramoProhibido(String mensaje, String? alternativa) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        key: const Key('alerta_tramo_prohibido'),
+        backgroundColor: AppTheme.surface,
+        icon: const Icon(Icons.warning_amber, color: AppTheme.error, size: 40),
+        title: const Text(TextosViaje.tituloTramoProhibido),
+        content: Text(
+          alternativa == null || mensaje.contains(alternativa)
+              ? mensaje
+              : '$mensaje\n\n${TextosViaje.rutaPermitida}: $alternativa',
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(TextosViaje.entendido),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── GPS modo pánico ────────────────────────────────────────────────────────
 
   void _iniciarGpsParanico() {
     if (_gpsTimer != null) return;
+    final ubicacion = context.read<UbicacionFuente>();
+    // Demo: el servidor genera las posiciones; el teléfono no envía su GPS.
+    if (ubicacion.esDemo) return;
     _gpsTimer = Timer.periodic(AppConfig.gpsPanicoInterval, (_) async {
       try {
-        final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
+        final pos = await ubicacion.posicionAhora(
+          limite: const Duration(seconds: 10),
         );
-        if (mounted) {
-          context.read<WsProvider>().sendGps(pos.latitude, pos.longitude);
+        if (pos != null && mounted) {
+          context.read<WsProvider>().sendGps(pos.lat, pos.lng);
         }
       } catch (_) {}
     });
@@ -315,15 +362,16 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
         .popUntil((r) => r.isFirst || !r.settings.name!.startsWith('chequeo'));
 
     try {
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 5));
-      if (!mounted) return;
+      final pos = await context
+          .read<UbicacionFuente>()
+          .posicionAhora(limite: const Duration(seconds: 5))
+          .timeout(const Duration(seconds: 5));
+      if (pos == null || !mounted) return;
       await context.read<ApiService>().registrarChequeo(
             widget.solicitudId,
             estado: estado,
-            lat: pos.latitude,
-            lng: pos.longitude,
+            lat: pos.lat,
+            lng: pos.lng,
             diaNumero: _diaActual,
           );
     } catch (_) {}
@@ -356,13 +404,16 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
     }
     setState(() => _procesando = true);
     try {
-      final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+      // En demo no depende del GPS real: usa la posición del viaje simulado.
+      final pos = await context
+          .read<UbicacionFuente>()
+          .posicionAhora(limite: const Duration(seconds: 15));
+      if (pos == null) throw Exception('sin ubicación');
       if (!mounted) return;
       final ok = await context.read<ViajeProvider>().reportarEnSitio(
             widget.solicitudId,
-            lat: pos.latitude,
-            lng: pos.longitude,
+            lat: pos.lat,
+            lng: pos.lng,
           );
       if (ok && mounted) {
         context.read<WsProvider>().marcarEnSitio();
@@ -598,7 +649,9 @@ class _PanelEnRuta extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
+        const PanelPosicionDemo(),
+        const SizedBox(height: 16),
         ElevatedButton.icon(
           icon: const Icon(Icons.receipt_long),
           label: const Text('📦 Registrar soporte'),

@@ -103,6 +103,50 @@ class AuthService {
     }
   }
 
+  // ── Modo demo ──────────────────────────────────────────────────────────────
+
+  /// Enlaza la APK de demostración con la simulación activa del panel mediante el código de 6
+  /// dígitos. No hay contraseña ni segundo factor: el token solo sirve para el conductor demo y el
+  /// servidor lo rechaza (401) si el código es inválido o no hay simulación activa. Guarda la
+  /// sesión igual que el login normal.
+  Future<LoginResult> loginDemo(String codigo) async {
+    AppLogger.info('Login demo: intento');
+    try {
+      final response =
+          await _post('/api/auth/conductor-demo', {'codigo': codigo});
+      final body = _decodificar(response);
+      if (response.statusCode == 200) {
+        final token = body['access_token'] as String?;
+        if (token == null) {
+          return const LoginResult(
+            success: false,
+            error: 'Respuesta inválida del servidor',
+          );
+        }
+        await _saveToken(token, body);
+        AppLogger.info('Login demo: exitoso');
+        return LoginResult(success: true, token: token, userData: body);
+      }
+      if (response.statusCode == 401) {
+        return const LoginResult(
+          success: false,
+          error: 'Código inválido o sin simulación activa',
+        );
+      }
+      final detail = body['detail'];
+      return LoginResult(
+        success: false,
+        error: detail is String ? detail : 'No se pudo enlazar la demo',
+      );
+    } on Exception catch (e, st) {
+      AppLogger.error('Login demo: error de conexión', e, stackTrace: st);
+      return const LoginResult(
+        success: false,
+        error: 'Sin conexión con el servidor. Revisa tu internet',
+      );
+    }
+  }
+
   // ── Segundo factor ─────────────────────────────────────────────────────────
 
   /// Primer ingreso de este teléfono: crea la llave y la registra.

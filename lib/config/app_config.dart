@@ -17,6 +17,21 @@ class AppConfig {
     defaultValue: 'ws://10.0.2.2:8001',
   );
 
+  // ── Modo demo ──────────────────────────────────────────────────────────────
+  /// APK de demostración comercial: se activa SOLO al compilar con
+  /// `--dart-define=MODO_DEMO=true`. En la APK normal es siempre false.
+  /// En demo no hay login con segundo factor (se enlaza con un código de 6
+  /// dígitos) y el teléfono NO manda su GPS: la posición la genera el servidor.
+  static const bool modoDemo = bool.fromEnvironment('MODO_DEMO');
+
+  /// Longitud del código de enlace que muestra el panel durante la simulación.
+  static const int codigoEnlaceLongitud = 6;
+
+  /// Punto de partida (San Juan del Cesar) si aún no llegó ninguna posición del
+  /// servidor y hay que reportar «en sitio»: aproximado, solo para la demo.
+  static const double demoLatInicial = 10.7706;
+  static const double demoLngInicial = -73.0033;
+
   // ── Timeouts ───────────────────────────────────────────────────────────────
   static const Duration httpTimeout = Duration(seconds: 30);
   static const Duration wsReconnectDelay = Duration(seconds: 3);

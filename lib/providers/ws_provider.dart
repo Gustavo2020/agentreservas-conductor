@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../services/seguimiento_service.dart';
+import '../services/ubicacion_fuente.dart';
 import '../services/ws_service.dart';
 
 /// Estado del viaje activo desde perspectiva del conductor.
@@ -14,8 +16,11 @@ enum EstadoViajeActivo {
 
 class WsProvider extends ChangeNotifier {
   final WsService _ws;
+  final PosicionSimulada? _simulada;
 
-  WsProvider(this._ws);
+  /// [simulada]: en modo demo, donde se guarda la última posición del vehículo que manda el
+  /// servidor (la lee [UbicacionDemo]).
+  WsProvider(this._ws, {PosicionSimulada? simulada}) : _simulada = simulada;
 
   EstadoViajeActivo _estado = EstadoViajeActivo.esperandoInicio;
   bool _chequeoSolicitado = false;
@@ -30,7 +35,21 @@ class WsProvider extends ChangeNotifier {
   String? _mensajeChecklistRechazo;
   bool _viajeConfirmadoPorSolicitante = false;
   bool _viajeTerminado = false;
+  // Aviso de que el vehículo entró a un tramo prohibido por operaciones.
+  bool _tramoProhibido = false;
+  String? _mensajeTramoProhibido;
+  String? _alternativaTramo;
+  // Posición del vehículo que manda el servidor y el rastro recorrido (se usa en modo demo).
+  MuestraGps? _posicionVehiculo;
+  final List<MuestraGps> _rastro = [];
+  static const int _maxRastro = 400;
   StreamSubscription<WsMensaje>? _sub;
+
+  bool get tramoProhibido => _tramoProhibido;
+  String? get mensajeTramoProhibido => _mensajeTramoProhibido;
+  String? get alternativaTramo => _alternativaTramo;
+  MuestraGps? get posicionVehiculo => _posicionVehiculo;
+  List<MuestraGps> get rastro => List.unmodifiable(_rastro);
 
   EstadoViajeActivo get estado => _estado;
   bool get chequeoSolicitado => _chequeoSolicitado;
@@ -67,6 +86,13 @@ class WsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void limpiarTramoProhibido() {
+    _tramoProhibido = false;
+    _mensajeTramoProhibido = null;
+    _alternativaTramo = null;
+    notifyListeners();
+  }
+
   void limpiarViajeTerminado() {
     _viajeTerminado = false;
     notifyListeners();
@@ -85,6 +111,10 @@ class WsProvider extends ChangeNotifier {
     _chequeoSolicitado = false;
     _viajeConfirmadoPorSolicitante = false;
     _viajeTerminado = false;
+    _tramoProhibido = false;
+    _posicionVehiculo = null;
+    _rastro.clear();
+    _simulada?.ultima = null;
     notifyListeners();
     await _ws.connect(solicitudId);
     _sub = _ws.stream.listen(_onMensaje);
@@ -122,6 +152,23 @@ class WsProvider extends ChangeNotifier {
           _checklistAprobado = true;
           _mensajeChecklistAprobacion = msg.data['mensaje'] as String?;
         }
+        notifyListeners();
+      case WsMensajeTipo.tramoProhibido:
+        _tramoProhibido = true;
+        _mensajeTramoProhibido = msg.data['mensaje'] as String?;
+        final alt = msg.data['alternativa'];
+        _alternativaTramo = alt is String && alt.isNotEmpty ? alt : null;
+        notifyListeners();
+      case WsMensajeTipo.posicionVehiculo:
+        final lat = msg.data['lat'];
+        final lng = msg.data['lng'];
+        if (lat is! num || lng is! num) break;
+        final punto =
+            MuestraGps(lat.toDouble(), lng.toDouble(), DateTime.now());
+        _posicionVehiculo = punto;
+        _simulada?.ultima = punto;
+        _rastro.add(punto);
+        if (_rastro.length > _maxRastro) _rastro.removeAt(0);
         notifyListeners();
       default:
         break;

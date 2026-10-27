@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../config/theme.dart';
 import '../models/soporte.dart';
 import '../models/trayecto.dart';
 import '../providers/viaje_provider.dart';
 import '../services/api_service.dart';
+import '../services/captura_foto.dart';
 import '../services/log_service.dart';
 import '../widgets/estado_badge.dart';
+import '../widgets/foto_geolocalizada.dart' show TextosFoto;
 
 final _fmt = NumberFormat('#,###', 'es_CO');
 
@@ -186,18 +188,16 @@ class _SoporteFormState extends State<_SoporteForm> {
     super.dispose();
   }
 
-  Future<void> _tomarFoto() async {
+  Future<void> _tomarFoto({bool soloGaleria = false}) async {
     if (_capturando) return;
     setState(() {
       _capturando = true;
       _error = null;
     });
     try {
-      final picker = ImagePicker();
-      final xFile = await picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-        maxWidth: 1920,
+      final xFile = await capturarFoto(
+        permitirGaleria: AppConfig.modoDemo,
+        soloGaleria: soloGaleria,
       );
       if (xFile == null || !mounted) return;
       final bytes = await xFile.readAsBytes();
@@ -389,6 +389,14 @@ class _SoporteFormState extends State<_SoporteForm> {
                 : null,
             onPressed: _capturando ? null : _tomarFoto,
           ),
+          if (AppConfig.modoDemo)
+            TextButton.icon(
+              key: const Key('boton_soporte_galeria'),
+              icon: const Icon(Icons.photo_library, size: 16),
+              label: const Text(TextosFoto.elegirGaleria),
+              onPressed:
+                  _capturando ? null : () => _tomarFoto(soloGaleria: true),
+            ),
 
           if (_error != null) ...[
             const SizedBox(height: 8),
