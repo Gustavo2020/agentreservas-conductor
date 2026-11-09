@@ -21,6 +21,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
+    <!-- Demo: servicio en primer plano que mantiene el WebSocket del viaje con la app minimizada
+         (Android 14 exige el permiso del tipo de servicio; aquí «dataSync»). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Demo: pedir al usuario excluir la app del ahorro agresivo de batería (opcional). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <!-- Android 13+: sin este permiso la notificacion del servicio en primer plano no se ve -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Saber si hay red (la cola de posiciones se vacia al volver la senal) -->
@@ -53,6 +59,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Servicio en primer plano del viaje (solo lo arranca la APK de demostración). El nombre
+             lo fija el plugin flutter_foreground_task. -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <!-- Proveedores de imagen: NO permitir acceso a galería -->
         <!-- Sin FileProvider para galería — las fotos solo se envían al servidor -->

@@ -28,6 +28,17 @@ class ViajeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Al terminar la sesión: nada del viaje anterior debe verse con el código siguiente.
+  void reiniciar() {
+    _viajes = [];
+    _viajeActual = null;
+    _soportesDia = [];
+    _totalDia = 0;
+    _loading = false;
+    _error = null;
+    notifyListeners();
+  }
+
   // ── Lista de viajes ────────────────────────────────────────────────────────
 
   Future<void> cargarMisViajes() async {

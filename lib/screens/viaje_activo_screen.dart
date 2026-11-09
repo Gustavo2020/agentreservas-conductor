@@ -8,25 +8,16 @@ import '../config/theme.dart';
 import '../providers/viaje_provider.dart';
 import '../providers/ws_provider.dart';
 import '../services/api_service.dart';
+import '../services/gestor_alerta_ruta.dart';
 import '../services/panico_service.dart';
 import '../services/seguimiento_controller.dart';
 import '../services/ubicacion_fuente.dart';
 import '../widgets/boton_panico.dart';
+import '../widgets/dialogo_alerta_ruta.dart';
 import '../widgets/loading_overlay.dart';
 import '../widgets/panel_posicion_demo.dart';
 import 'cierre_dia_screen.dart';
 import 'soportes_screen.dart';
-
-/// Textos del aviso de tramo prohibido (centralizados para aprobación).
-class TextosViaje {
-  TextosViaje._();
-
-  static const String tramoProhibido =
-      'Entraste a un tramo prohibido. Sal de la vía y comunícate con operaciones';
-  static const String tituloTramoProhibido = 'Tramo prohibido';
-  static const String rutaPermitida = 'Ruta permitida';
-  static const String entendido = 'Entendido';
-}
 
 class ViajeActivoScreen extends StatefulWidget {
   final int solicitudId;
@@ -43,10 +34,17 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
   int _diaActual = 1;
   // El seguimiento ya se pidio para este viaje: no se vuelve a pedir en cada cambio del socket.
   bool _seguimientoPedido = false;
+  // Se guarda para usarlo en dispose, cuando el contexto ya no sirve para buscar providers.
+  late final WsProvider _ws;
+  // Demostración: el gestor de la alerta atiende el tramo prohibido a nivel de la app (con la
+  // pantalla cerrada o la app minimizada) y mantiene el socket vivo al salir de esta pantalla.
+  GestorAlertaRuta? _gestor;
 
   @override
   void initState() {
     super.initState();
+    _ws = context.read<WsProvider>();
+    _gestor = gestorAlertaRutaDe(context);
     _conectarWs();
   }
 
@@ -99,6 +97,7 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
 
   void _mostrarViajeTerminado() {
     if (!mounted) return;
+    unawaited(_gestor?.viajeCerrado() ?? Future<void>.value());
     context.read<WsProvider>().limpiarViajeTerminado();
     showDialog(
       context: context,
@@ -175,7 +174,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
       _recuperarEstadoDesdeApi();
       return;
     }
-    if (wsProv.tramoProhibido && mounted) {
+    // Sin gestor (app de operación) la pantalla muestra el aviso; con gestor lo atiende él.
+    if (_gestor == null && wsProv.tramoProhibido && mounted) {
       final mensaje =
           wsProv.mensajeTramoProhibido ?? TextosViaje.tramoProhibido;
       final alternativa = wsProv.alternativaTramo;
@@ -288,26 +288,8 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
 
   void _mostrarAlertaTramoProhibido(String mensaje, String? alternativa) {
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        key: const Key('alerta_tramo_prohibido'),
-        backgroundColor: AppTheme.surface,
-        icon: const Icon(Icons.warning_amber, color: AppTheme.error, size: 40),
-        title: const Text(TextosViaje.tituloTramoProhibido),
-        content: Text(
-          alternativa == null || mensaje.contains(alternativa)
-              ? mensaje
-              : '$mensaje\n\n${TextosViaje.rutaPermitida}: $alternativa',
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(TextosViaje.entendido),
-          ),
-        ],
-      ),
-    );
+    unawaited(mostrarDialogoTramoProhibido(context,
+        mensaje: mensaje, alternativa: alternativa));
   }
 
   // ── GPS modo pánico ────────────────────────────────────────────────────────
@@ -445,9 +427,10 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
   void dispose() {
     _gpsTimer?.cancel();
     _chequeoAutoTimer?.cancel();
-    context.read<WsProvider>()
-      ..removeListener(_onWsChange)
-      ..desconectar();
+    _ws.removeListener(_onWsChange);
+    // Demostración: el socket sigue vivo al salir de la pantalla mientras el viaje no termine
+    // (lo corta el gestor al terminar el viaje o la sesión).
+    if (_gestor == null) _ws.desconectar();
     super.dispose();
   }
 

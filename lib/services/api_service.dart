@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
@@ -23,6 +24,11 @@ class ApiService {
   ApiService(this._auth, {http.Client? httpClient})
       : _httpClient = httpClient ?? http.Client();
 
+  /// Se llama cuando el servidor responde 401 a una llamada autenticada: la sesión ya no vale
+  /// (token vencido o revocado). La APK de demostración lo usa para volver a la pantalla del
+  /// código; la app de operación lo deja sin asignar y todo sigue igual.
+  Future<void> Function()? alNoAutorizado;
+
   // ── Helpers internos ───────────────────────────────────────────────────────
 
   Future<Map<String, String>> _headers() async {
@@ -45,6 +51,10 @@ class ApiService {
           _parseBody(response)['detail'] as String? ?? 'Sin autorización';
       AppLogger.warning('ApiService: acceso denegado',
           context: {'path': path, 'status': '${response.statusCode}'});
+      if (response.statusCode == 401) {
+        final aviso = alNoAutorizado;
+        if (aviso != null) unawaited(aviso());
+      }
       throw ApiException(response.statusCode, msg);
     }
     if (response.statusCode >= 400) {

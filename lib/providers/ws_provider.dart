@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../config/textos_demo_alertas.dart' show TextosAlertaRuta;
+import '../models/alerta_ruta.dart';
 import '../services/seguimiento_service.dart';
 import '../services/ubicacion_fuente.dart';
 import '../services/ws_service.dart';
@@ -39,6 +41,11 @@ class WsProvider extends ChangeNotifier {
   bool _tramoProhibido = false;
   String? _mensajeTramoProhibido;
   String? _alternativaTramo;
+  AlertaRuta? _alertaTramo;
+  // Viaje al que está conectado el socket (null si no hay conexión pedida).
+  int? _solicitudActiva;
+  // Cuenta las veces que se pidió conectar: distingue «otra conexión» de «la misma».
+  int _generacion = 0;
   // Posición del vehículo que manda el servidor y el rastro recorrido (se usa en modo demo).
   MuestraGps? _posicionVehiculo;
   final List<MuestraGps> _rastro = [];
@@ -48,6 +55,13 @@ class WsProvider extends ChangeNotifier {
   bool get tramoProhibido => _tramoProhibido;
   String? get mensajeTramoProhibido => _mensajeTramoProhibido;
   String? get alternativaTramo => _alternativaTramo;
+
+  /// La alerta de tramo prohibido pendiente de atender (con su clave de idempotencia).
+  AlertaRuta? get alertaTramo => _alertaTramo;
+
+  /// Viaje al que está conectado el socket, o null.
+  int? get solicitudActiva => _solicitudActiva;
+  int get generacion => _generacion;
   MuestraGps? get posicionVehiculo => _posicionVehiculo;
   List<MuestraGps> get rastro => List.unmodifiable(_rastro);
 
@@ -90,6 +104,7 @@ class WsProvider extends ChangeNotifier {
     _tramoProhibido = false;
     _mensajeTramoProhibido = null;
     _alternativaTramo = null;
+    _alertaTramo = null;
     notifyListeners();
   }
 
@@ -103,8 +118,11 @@ class WsProvider extends ChangeNotifier {
   Future<void> conectar(int solicitudId) async {
     // Cancelar suscripción anterior antes de reasignar para evitar listeners
     // duplicados si conectar() se llama más de una vez en el mismo ciclo.
-    await _sub?.cancel();
+    unawaited(_sub?.cancel());
     _sub = null;
+    // Cede un turno: la pantalla llama a esto desde initState y notificar a los oyentes en medio
+    // de la construcción del árbol es un error de Flutter.
+    await Future<void>.value();
     // Reiniciar estado: evita que estado stale de sesiones anteriores
     // (enRuta, viajeConfirmado, etc.) salte el flujo de abordaje.
     _estado = EstadoViajeActivo.esperandoInicio;
@@ -112,9 +130,12 @@ class WsProvider extends ChangeNotifier {
     _viajeConfirmadoPorSolicitante = false;
     _viajeTerminado = false;
     _tramoProhibido = false;
+    _alertaTramo = null;
     _posicionVehiculo = null;
     _rastro.clear();
     _simulada?.ultima = null;
+    _solicitudActiva = solicitudId;
+    _generacion++;
     notifyListeners();
     await _ws.connect(solicitudId);
     _sub = _ws.stream.listen(_onMensaje);
@@ -158,6 +179,10 @@ class WsProvider extends ChangeNotifier {
         _mensajeTramoProhibido = msg.data['mensaje'] as String?;
         final alt = msg.data['alternativa'];
         _alternativaTramo = alt is String && alt.isNotEmpty ? alt : null;
+        _alertaTramo = AlertaRuta.deMensaje(
+          msg.data,
+          textoPorDefecto: TextosAlertaRuta.textoPorDefecto,
+        );
         notifyListeners();
       case WsMensajeTipo.posicionVehiculo:
         final lat = msg.data['lat'];
@@ -258,9 +283,37 @@ class WsProvider extends ChangeNotifier {
   // ── Desconectar ────────────────────────────────────────────────────────────
 
   Future<void> desconectar() async {
-    await _sub?.cancel();
+    _solicitudActiva = null;
+    // No se espera el resultado de `cancel()`: puede tardar si se llama desde el propio aviso que
+    // la suscripción está entregando, y aquí no hace falta.
+    unawaited(_sub?.cancel());
+    _sub = null;
     await _ws.disconnect();
   }
+
+  /// Al terminar la sesión: corta el socket y borra todo lo del viaje anterior.
+  Future<void> reiniciar() async {
+    await desconectar();
+    _estado = EstadoViajeActivo.esperandoInicio;
+    _chequeoSolicitado = false;
+    _solicitudCancelada = false;
+    _mensajeCancelacion = null;
+    _checklistAprobado = false;
+    _checklistRechazado = false;
+    _viajeConfirmadoPorSolicitante = false;
+    _viajeTerminado = false;
+    _tramoProhibido = false;
+    _mensajeTramoProhibido = null;
+    _alternativaTramo = null;
+    _alertaTramo = null;
+    _posicionVehiculo = null;
+    _rastro.clear();
+    _simulada?.ultima = null;
+    notifyListeners();
+  }
+
+  /// Reconexión inmediata (la red volvió o la app regresó al primer plano).
+  Future<void> reconectarAhora() => _ws.reconectarAhora();
 
   @override
   void dispose() {

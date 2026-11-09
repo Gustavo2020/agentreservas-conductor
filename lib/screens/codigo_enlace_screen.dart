@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
+import '../config/textos_demo_alertas.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import 'viajes_screen.dart';
@@ -54,6 +55,14 @@ class _CodigoEnlaceScreenState extends State<CodigoEnlaceScreen> {
   Widget build(BuildContext context) {
     final loading = context.select<AuthProvider, bool>((a) => a.loading);
     final error = context.select<AuthProvider, String?>((a) => a.error);
+    final motivoFin = context.select<AuthProvider, MotivoFinSesion?>(
+        (a) => a.motivoFin);
+    // Si la sesión terminó sola (vencida o rechazada por el servidor) se explica por qué hay que
+    // volver a enlazar; si el usuario la cerró él mismo, no hace falta.
+    final avisoFin = motivoFin == MotivoFinSesion.vencida ||
+            motivoFin == MotivoFinSesion.rechazada
+        ? TextosSesionDemo.sesionTerminada
+        : null;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -82,6 +91,16 @@ class _CodigoEnlaceScreenState extends State<CodigoEnlaceScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.onSurface, fontSize: 14),
                   ),
+                  if (avisoFin != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      avisoFin,
+                      key: const Key('aviso_sesion_terminada'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: AppTheme.primary, fontSize: 13),
+                    ),
+                  ],
                   const SizedBox(height: 32),
                   TextFormField(
                     key: const Key('campo_codigo_enlace'),

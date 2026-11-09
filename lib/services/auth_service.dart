@@ -281,6 +281,27 @@ class AuthService {
     return jsonDecode(raw) as Map<String, dynamic>;
   }
 
+  /// Momento en que vence el JWT (claim `exp`), o null si no se puede leer. Solo lee el contenido
+  /// del token para saber CUÁNDO termina la sesión; la validez la decide siempre el servidor.
+  static DateTime? vencimientoDe(String token) {
+    try {
+      final partes = token.split('.');
+      if (partes.length != 3) return null;
+      final json = jsonDecode(
+          utf8.decode(base64Url.decode(base64Url.normalize(partes[1]))));
+      final exp = json is Map<String, dynamic> ? json['exp'] : null;
+      if (exp is! num) return null;
+      return DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000);
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<DateTime?> vencimientoSesion() async {
+    final token = await getToken();
+    return token == null ? null : vencimientoDe(token);
+  }
+
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;

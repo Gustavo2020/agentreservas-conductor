@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/viaje_provider.dart';
+import '../widgets/dialogo_alerta_ruta.dart';
 import '../widgets/estado_badge.dart';
 import '../widgets/loading_overlay.dart';
 import 'viajes_screen.dart';
@@ -105,6 +106,8 @@ class _CierreDiaScreenState extends State<CierreDiaScreen> {
           backgroundColor: AppTheme.success,
         ),
       );
+      unawaited(gestorAlertaRutaDe(context)?.viajeCerrado() ??
+          Future<void>.value());
       unawaited(Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const ViajesScreen()),
         (_) => false,

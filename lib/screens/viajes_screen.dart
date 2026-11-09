@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../config/app_config.dart';
 import '../config/theme.dart';
 import '../models/viaje.dart';
 import '../providers/auth_provider.dart';
@@ -13,7 +14,10 @@ import 'detalle_viaje_screen.dart';
 import 'login_screen.dart';
 
 class ViajesScreen extends StatefulWidget {
-  const ViajesScreen({super.key});
+  /// Demostración: cerrar sesión NO navega aquí; el control de sesión de la app (que también
+  /// atiende el vencimiento y el 401) lleva siempre a la pantalla del código.
+  final bool demo;
+  const ViajesScreen({super.key, this.demo = AppConfig.modoDemo});
 
   @override
   State<ViajesScreen> createState() => _ViajesScreenState();
@@ -46,7 +50,7 @@ class _ViajesScreenState extends State<ViajesScreen> {
     final auth = context.read<AuthProvider>();
     await seguimiento.detener();
     await auth.logout();
-    if (!mounted) return;
+    if (widget.demo || !mounted) return;
     unawaited(Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,

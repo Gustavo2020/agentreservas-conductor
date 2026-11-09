@@ -2,12 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
+import 'codigo_enlace_screen.dart';
 import 'viajes_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// En la APK de demostración el login de la app de operación NO existe: si alguna ruta llegara
+  /// a construirlo, se muestra la pantalla del código de enlace.
+  final bool demo;
+  const LoginScreen({super.key, this.demo = AppConfig.modoDemo});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -43,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.demo) return const CodigoEnlaceScreen();
     final loading = context.select<AuthProvider, bool>((a) => a.loading);
     final error = context.select<AuthProvider, String?>((a) => a.error);
 
