@@ -235,6 +235,23 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
     );
   }
 
+  /// «Situación normalizada»: primero se avisa al servidor (para que la alarma del mapa deje de
+  /// sonar) y solo con su confirmación se vuelve a la ruta. Sin señal se queda en la pantalla de
+  /// pánico para poder reintentar: así el conductor nunca cree apagada una alarma que sigue sonando.
+  Future<void> _normalizarPanico() async {
+    final ws = context.read<WsProvider>();
+    try {
+      await context.read<ApiService>().normalizarPanico(widget.solicitudId);
+      if (!mounted) return;
+      ws.desactivarModoPanico();
+    } on ApiException catch (e) {
+      _avisar('No se pudo avisar a operaciones: ${e.message}', error: true);
+    } catch (_) {
+      _avisar('Sin señal: no se pudo avisar a operaciones. Intenta de nuevo.',
+          error: true);
+    }
+  }
+
   Future<void> _pulsarPanico() async {
     final r = await context
         .read<SeguimientoController>()
@@ -547,9 +564,7 @@ class _ViajeActivoScreenState extends State<ViajeActivoScreen> {
           ),
         ),
       EstadoViajeActivo.modoPanico => _PanelPanico(
-          onNormalizar: () {
-            context.read<WsProvider>().desactivarModoPanico();
-          },
+          onNormalizar: _normalizarPanico,
         ),
     };
   }

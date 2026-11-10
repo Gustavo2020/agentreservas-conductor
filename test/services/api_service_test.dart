@@ -23,6 +23,47 @@ ApiService _makeApi({
 }
 
 void main() {
+  group('ApiService.normalizarPanico', () {
+    test('avisa al servidor y devuelve si reconoció la alerta', () async {
+      final api = _makeApi(
+        handler: (req) async {
+          expect(req.method, 'POST');
+          expect(req.url.path, '/api/conductor/viajes/12/panico/normalizado');
+          expect(req.headers['Authorization'], 'Bearer test-jwt-token');
+          return http.Response(
+            jsonEncode({'ok': true, 'modo_panico': true, 'reconocida': true}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        },
+      );
+      expect(await api.normalizarPanico(12), isTrue);
+    });
+
+    test('si no había alerta abierta responde false, sin fallar', () async {
+      final api = _makeApi(
+        handler: (_) async => http.Response(
+          jsonEncode({'ok': true, 'modo_panico': true, 'reconocida': false}),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      expect(await api.normalizarPanico(12), isFalse);
+    });
+
+    test('un error del servidor se propaga para que la pantalla lo avise',
+        () async {
+      final api = _makeApi(
+        handler: (_) async => http.Response(
+          jsonEncode({'detail': 'El viaje no está en curso'}),
+          409,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      expect(() => api.normalizarPanico(12), throwsA(isA<ApiException>()));
+    });
+  });
+
   group('ApiService.get', () {
     test('retorna body parseado en éxito 200', () async {
       final api = _makeApi(

@@ -220,6 +220,15 @@ class ApiService {
         body: {'lat': lat, 'lng': lng});
   }
 
+  /// «Situación normalizada»: el conductor avisa al servidor que el pánico pasó. El servidor
+  /// reconoce la alerta (la alarma del mapa deja de sonar), pero NO cierra el modo pánico: eso lo
+  /// decide un operador. Devuelve si esta llamada reconoció una alerta abierta.
+  Future<bool> normalizarPanico(int solicitudId) async {
+    final r =
+        await post('/api/conductor/viajes/$solicitudId/panico/normalizado');
+    return r['reconocida'] == true;
+  }
+
   Future<Map<String, dynamic>> registrarChequeo(
     int solicitudId, {
     required String estado,
