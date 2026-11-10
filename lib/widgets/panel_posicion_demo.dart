@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../config/app_config.dart';
 import '../config/theme.dart';
 import '../providers/ws_provider.dart';
-import '../services/seguimiento_service.dart';
+import '../services/api_service.dart';
+import '../services/estilo_mapa.dart';
+import 'mapa_rastro.dart';
+import 'rastro_painter.dart';
 
 /// Textos del panel de posición de la demo (centralizados para aprobación).
 class TextosPosicionDemo {
@@ -53,57 +56,29 @@ class PanelPosicionDemo extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 110,
+            height: 200,
             width: double.infinity,
-            child: CustomPaint(painter: _RastroPainter(ws.rastro)),
+            child: _recorrido(context, ws),
           ),
         ],
       ),
     );
   }
-}
 
-class _RastroPainter extends CustomPainter {
-  final List<MuestraGps> puntos;
-  _RastroPainter(this.puntos);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (puntos.isEmpty) return;
-    var minLat = puntos.first.lat, maxLat = minLat;
-    var minLng = puntos.first.lng, maxLng = minLng;
-    for (final p in puntos) {
-      if (p.lat < minLat) minLat = p.lat;
-      if (p.lat > maxLat) maxLat = p.lat;
-      if (p.lng < minLng) minLng = p.lng;
-      if (p.lng > maxLng) maxLng = p.lng;
+  /// El mapa real si la app tiene su servicio de API; si no, el trazo simple.
+  Widget _recorrido(BuildContext context, WsProvider ws) {
+    ApiService api;
+    try {
+      api = Provider.of<ApiService>(context, listen: false);
+    } on ProviderNotFoundException {
+      return RastroSimple(rastro: ws.rastro);
     }
-    const margen = 8.0;
-    final dLat = (maxLat - minLat).abs() < 1e-9 ? 1.0 : maxLat - minLat;
-    final dLng = (maxLng - minLng).abs() < 1e-9 ? 1.0 : maxLng - minLng;
-    Offset aPantalla(MuestraGps p) => Offset(
-          margen + (p.lng - minLng) / dLng * (size.width - 2 * margen),
-          size.height -
-              margen -
-              (p.lat - minLat) / dLat * (size.height - 2 * margen),
-        );
-
-    final linea = Paint()
-      ..color = AppTheme.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    final trazo = Path()
-      ..moveTo(aPantalla(puntos.first).dx, aPantalla(puntos.first).dy);
-    for (final p in puntos.skip(1)) {
-      final o = aPantalla(p);
-      trazo.lineTo(o.dx, o.dy);
-    }
-    canvas.drawPath(trazo, linea);
-    canvas.drawCircle(
-        aPantalla(puntos.last), 6, Paint()..color = AppTheme.success);
+    return MapaRastro(
+      key: const Key('mapa_rastro_demo'),
+      rastro: ws.rastro,
+      cargarEstilo: () async =>
+          EstiloMapa.desde(await api.get('/api/conductor/mapa/estilo')),
+      pedirTesela: api.getBytes,
+    );
   }
-
-  @override
-  bool shouldRepaint(_RastroPainter old) => old.puntos.length != puntos.length;
 }

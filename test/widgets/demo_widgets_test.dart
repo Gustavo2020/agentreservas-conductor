@@ -1,11 +1,18 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:agentreservas_conductor/providers/auth_provider.dart';
 import 'package:agentreservas_conductor/providers/ws_provider.dart';
 import 'package:agentreservas_conductor/screens/codigo_enlace_screen.dart';
+import 'package:agentreservas_conductor/services/api_service.dart';
 import 'package:agentreservas_conductor/services/auth_service.dart';
 import 'package:agentreservas_conductor/services/ws_service.dart';
 import 'package:agentreservas_conductor/widgets/banda_demo.dart';
+import 'package:agentreservas_conductor/widgets/mapa_rastro.dart';
 import 'package:agentreservas_conductor/widgets/panel_posicion_demo.dart';
+import 'package:agentreservas_conductor/widgets/rastro_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -104,6 +111,46 @@ void main() {
           WsService(AuthService(storage: const FlutterSecureStorage())));
       await tester.pumpWidget(app(ws));
       expect(find.text(TextosPosicionDemo.esperando), findsOneWidget);
+    });
+
+    testWidgets(
+        'sin servicio de API (APK normal o pruebas) queda el trazo simple',
+        (tester) async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final ws = WsProvider(
+          WsService(AuthService(storage: const FlutterSecureStorage())));
+      await tester.pumpWidget(app(ws));
+      expect(find.byType(RastroSimple), findsOneWidget);
+      expect(find.byType(MapaRastro), findsNothing);
+    });
+
+    testWidgets(
+        'con servicio de API pide el estilo al servidor y dibuja el mapa',
+        (tester) async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final auth = AuthService(storage: const FlutterSecureStorage());
+      final pedidas = <String>[];
+      final api = ApiService(auth, httpClient: MockClient((peticion) async {
+        pedidas.add(peticion.url.path);
+        return respuestaJson(jsonDecode(
+                File('test/fixtures/estilo_conductor.json').readAsStringSync())
+            as Map<String, dynamic>);
+      }));
+      final ws = WsProvider(WsService(auth));
+      await tester.pumpWidget(MultiProvider(
+        providers: [
+          Provider<ApiService>.value(value: api),
+          ChangeNotifierProvider<WsProvider>.value(value: ws),
+        ],
+        child: const MaterialApp(
+            home: Scaffold(body: PanelPosicionDemo(activa: true))),
+      ));
+      await tester.pump();
+      await tester.pump();
+      expect(pedidas, contains('/api/conductor/mapa/estilo'));
+      expect(find.byType(FlutterMap), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('inactivo (APK normal) no ocupa espacio', (tester) async {

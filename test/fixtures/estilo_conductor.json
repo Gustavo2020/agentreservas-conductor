@@ -1,0 +1,1049 @@
+{
+ "version": 8,
+ "sources": {
+  "base": {
+   "type": "vector",
+   "tiles": [
+    "/api/conductor/mapa/teselas/la_guajira/{z}/{x}/{y}"
+   ],
+   "minzoom": 0,
+   "maxzoom": 14,
+   "bounds": [
+    -83.3,
+    -4.3,
+    -66.8,
+    16.7
+   ],
+   "attribution": "\u00a9 OpenMapTiles \u00a9 OpenStreetMap contributors"
+  }
+ },
+ "layers": [
+  {
+   "id": "fondo",
+   "type": "background",
+   "paint": {
+    "background-color": "#e8ebee"
+   }
+  },
+  {
+   "id": "cobertura",
+   "source": "base",
+   "source-layer": "landcover",
+   "type": "fill",
+   "minzoom": 5,
+   "paint": {
+    "fill-color": [
+     "match",
+     [
+      "get",
+      "class"
+     ],
+     "wood",
+     "#dfe8d8",
+     "grass",
+     "#e9eddc",
+     "farmland",
+     "#eeeedd",
+     "sand",
+     "#f1ead2",
+     "wetland",
+     "#d4e6e0",
+     "rock",
+     "#d9dce0",
+     "#e9eddc"
+    ],
+    "fill-opacity": 0.9
+   }
+  },
+  {
+   "id": "uso",
+   "source": "base",
+   "source-layer": "landuse",
+   "type": "fill",
+   "minzoom": 8,
+   "filter": [
+    "in",
+    [
+     "get",
+     "class"
+    ],
+    [
+     "literal",
+     [
+      "residential",
+      "commercial",
+      "retail",
+      "industrial"
+     ]
+    ]
+   ],
+   "paint": {
+    "fill-color": [
+     "match",
+     [
+      "get",
+      "class"
+     ],
+     "industrial",
+     "#d9dce0",
+     "#e1e4e8"
+    ],
+    "fill-opacity": 0.85
+   }
+  },
+  {
+   "id": "parques",
+   "source": "base",
+   "source-layer": "park",
+   "type": "fill",
+   "minzoom": 6,
+   "paint": {
+    "fill-color": "#d9e6d3",
+    "fill-opacity": 0.7
+   }
+  },
+  {
+   "id": "parques-borde",
+   "source": "base",
+   "source-layer": "park",
+   "type": "line",
+   "minzoom": 6,
+   "paint": {
+    "line-color": "#a9c4a0",
+    "line-width": 0.8,
+    "line-dasharray": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "id": "agua",
+   "source": "base",
+   "source-layer": "water",
+   "type": "fill",
+   "paint": {
+    "fill-color": "#b5d2e6"
+   }
+  },
+  {
+   "id": "rios",
+   "source": "base",
+   "source-layer": "waterway",
+   "type": "line",
+   "minzoom": 8,
+   "filter": [
+    "in",
+    [
+     "get",
+     "class"
+    ],
+    [
+     "literal",
+     [
+      "river",
+      "canal"
+     ]
+    ]
+   ],
+   "paint": {
+    "line-color": "#2f6a94",
+    "line-opacity": 0.5,
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     0.6,
+     14,
+     1.6
+    ]
+   }
+  },
+  {
+   "id": "limites",
+   "source": "base",
+   "source-layer": "boundary",
+   "type": "line",
+   "filter": [
+    "all",
+    [
+     "<=",
+     [
+      "to-number",
+      [
+       "get",
+       "admin_level"
+      ],
+      99
+     ],
+     4
+    ],
+    [
+     "!=",
+     [
+      "to-number",
+      [
+       "get",
+       "maritime"
+      ],
+      0
+     ],
+     1
+    ]
+   ],
+   "layout": {
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#7a8591",
+    "line-width": [
+     "case",
+     [
+      "<=",
+      [
+       "to-number",
+       [
+        "get",
+        "admin_level"
+       ],
+       99
+      ],
+      2
+     ],
+     1.4,
+     0.8
+    ],
+    "line-dasharray": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "id": "edificios",
+   "source": "base",
+   "source-layer": "building",
+   "type": "fill",
+   "minzoom": 14,
+   "paint": {
+    "fill-color": "#d9dce0",
+    "fill-opacity": 0.8
+   }
+  },
+  {
+   "id": "via-servicio-borde",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 14,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "service"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#cfd4da",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     3.2,
+     17,
+     7
+    ]
+   }
+  },
+  {
+   "id": "via-menor-borde",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 12,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "minor"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#cfd4da",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     2.8,
+     14,
+     4.6,
+     17,
+     10
+    ]
+   }
+  },
+  {
+   "id": "via-terciaria-borde",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 11,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "tertiary"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#d8c37a",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     9,
+     2.6,
+     10,
+     3,
+     14,
+     5.2,
+     17,
+     11
+    ]
+   }
+  },
+  {
+   "id": "via-secundaria-borde",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 10,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "secondary"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#d8c37a",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     2.7,
+     10,
+     3.4,
+     14,
+     6.2,
+     17,
+     13
+    ]
+   }
+  },
+  {
+   "id": "via-principal-borde",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 9,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "primary"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#a98235",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     2.8,
+     10,
+     4,
+     14,
+     7.5,
+     17,
+     15
+    ]
+   }
+  },
+  {
+   "id": "via-troncal-borde",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 8,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "motorway",
+       "trunk"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#a87a2c",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     3.2,
+     10,
+     4.6,
+     14,
+     9,
+     17,
+     17
+    ]
+   }
+  },
+  {
+   "id": "via-trocha",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 12,
+   "filter": [
+    "in",
+    [
+     "get",
+     "class"
+    ],
+    [
+     "literal",
+     [
+      "track",
+      "path"
+     ]
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#b3bac2",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     0.6,
+     15,
+     1.6
+    ],
+    "line-dasharray": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "id": "via-tunel",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 10,
+   "filter": [
+    "==",
+    [
+     "get",
+     "brunnel"
+    ],
+    "tunnel"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#7a8591",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     0.8,
+     14,
+     2
+    ],
+    "line-dasharray": [
+     1.5,
+     1.5
+    ]
+   }
+  },
+  {
+   "id": "via-servicio",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 14,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "service"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     1.2,
+     17,
+     5
+    ]
+   }
+  },
+  {
+   "id": "via-menor",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 12,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "minor"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     0.8,
+     14,
+     2.6,
+     17,
+     8
+    ]
+   }
+  },
+  {
+   "id": "via-terciaria",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 9,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "tertiary"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#fbf0c4",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     9,
+     0.6,
+     10,
+     1,
+     14,
+     3.2,
+     17,
+     9
+    ]
+   }
+  },
+  {
+   "id": "via-secundaria",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 8,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "secondary"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#fbf0c4",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     0.7,
+     10,
+     1.4,
+     14,
+     4.2,
+     17,
+     11
+    ]
+   }
+  },
+  {
+   "id": "via-principal",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 6,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "primary"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#f5d58c",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     0.8,
+     10,
+     2,
+     14,
+     5.5,
+     17,
+     13
+    ]
+   }
+  },
+  {
+   "id": "via-troncal",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 5,
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "get",
+      "class"
+     ],
+     [
+      "literal",
+      [
+       "motorway",
+       "trunk"
+      ]
+     ]
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "brunnel"
+     ],
+     "tunnel"
+    ]
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#eebb62",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     1.2,
+     10,
+     2.6,
+     14,
+     7,
+     17,
+     15
+    ]
+   }
+  },
+  {
+   "id": "ferrocarril",
+   "type": "line",
+   "source": "base",
+   "source-layer": "transportation",
+   "minzoom": 8,
+   "filter": [
+    "==",
+    [
+     "get",
+     "class"
+    ],
+    "rail"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#8b95a0",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     0.7,
+     14,
+     1.4
+    ],
+    "line-dasharray": [
+     4,
+     3
+    ]
+   }
+  },
+  {
+   "id": "pistas",
+   "type": "line",
+   "source": "base",
+   "source-layer": "aeroway",
+   "minzoom": 10,
+   "filter": [
+    "in",
+    [
+     "get",
+     "class"
+    ],
+    [
+     "literal",
+     [
+      "runway",
+      "taxiway"
+     ]
+    ]
+   ],
+   "paint": {
+    "line-color": "#cfd4da",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     10,
+     1.5,
+     14,
+     6
+    ]
+   }
+  }
+ ]
+}

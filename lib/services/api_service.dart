@@ -90,6 +90,17 @@ class ApiService {
     }
   }
 
+  /// GET de un recurso binario (teselas del mapa) con la sesión del conductor.
+  Future<Uint8List> getBytes(String path) async {
+    final token = await _auth.getToken();
+    final response = await _httpClient.get(
+      Uri.parse('${AppConfig.baseUrl}$path'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    ).timeout(AppConfig.httpTimeout);
+    _checkStatus(response, path);
+    return response.bodyBytes;
+  }
+
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,
