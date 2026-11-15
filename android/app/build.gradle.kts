@@ -24,6 +24,13 @@ val demoKeystoreProps: Properties? =
         ?.takeIf { it.isFile }
         ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
 
+// Llave de lanzamiento de la APK real de Viasofia (fuera del repo; ver scripts/compilar_apk_viasofia.sh).
+val releaseKeystoreProps: Properties? =
+    System.getenv("VIASOFIA_RELEASE_KEYSTORE_PROPS")
+        ?.let { file(it) }
+        ?.takeIf { it.isFile }
+        ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
+
 android {
     namespace = "com.geb.agentreservas_conductor"
     compileSdk = 36
@@ -50,12 +57,20 @@ android {
         resValue(
             "string",
             "app_name",
-            if (modoDemo) "Viasofia Demo" else "AgentReservas Conductor",
+            if (modoDemo) "Viasofia Demo" else "Viasofia",
         )
         if (modoDemo) applicationIdSuffix = ".demo"
     }
 
     signingConfigs {
+        if (releaseKeystoreProps != null) {
+            create("viasofia") {
+                storeFile = file(releaseKeystoreProps.getProperty("storeFile"))
+                storePassword = releaseKeystoreProps.getProperty("storePassword")
+                keyAlias = releaseKeystoreProps.getProperty("keyAlias")
+                keyPassword = releaseKeystoreProps.getProperty("keyPassword")
+            }
+        }
         if (demoKeystoreProps != null) {
             create("demo") {
                 storeFile = file(demoKeystoreProps.getProperty("storeFile"))
@@ -73,7 +88,11 @@ android {
                     // La demo nunca se firma con la llave debug.
                     checkNotNull(demoKeystoreProps) { "Falta VIASOFIA_DEMO_KEYSTORE_PROPS" }
                     signingConfigs.getByName("demo")
+                } else if (releaseKeystoreProps != null) {
+                    // La APK real que se distribuye: siempre con la llave de lanzamiento.
+                    signingConfigs.getByName("viasofia")
                 } else {
+                    // Compilaciones de desarrollo (sin VIASOFIA_RELEASE_KEYSTORE_PROPS): llave debug, no distribuir.
                     signingConfigs.getByName("debug")
                 }
         }
