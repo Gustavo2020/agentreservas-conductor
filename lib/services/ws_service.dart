@@ -51,7 +51,7 @@ class WsMensaje {
 /// red o la app regresa al primer plano. La app de operación no lo activa y sigue como antes.
 class WsService {
   final AuthService _auth;
-  final WebSocketChannel Function(Uri) _crearCanal;
+  final WebSocketChannel Function(Uri, Iterable<String>) _crearCanal;
 
   /// Reintentos sin límite, espera con tope y vigilancia del socket muerto (solo demo).
   final bool resiliente;
@@ -71,13 +71,13 @@ class WsService {
 
   WsService(
     this._auth, {
-    WebSocketChannel Function(Uri)? crearCanal,
+    WebSocketChannel Function(Uri, Iterable<String>)? crearCanal,
     this.resiliente = false,
     this.verificarSesion,
     this.esperaMaxima = const Duration(seconds: 30),
     this.silencioMaximo = const Duration(seconds: 90),
     DateTime Function()? ahora,
-  })  : _crearCanal = crearCanal ?? WebSocketChannel.connect,
+  })  : _crearCanal = crearCanal ?? _conectar,
         _ahora = ahora ?? DateTime.now;
 
   WebSocketChannel? _channel;
@@ -91,6 +91,12 @@ class WsService {
   late DateTime _ultimaActividad = _ahora();
 
   Stream<WsMensaje> get stream => _controller?.stream ?? const Stream.empty();
+
+  /// Subprotocolo que el servidor acepta; el segundo valor que se manda es el JWT.
+  static const String subprotocolo = 'patrix.conductor';
+
+  static WebSocketChannel _conectar(Uri uri, Iterable<String> protocolos) =>
+      WebSocketChannel.connect(uri, protocols: protocolos);
 
   bool get isConnected => _channel != null;
 
@@ -108,7 +114,7 @@ class WsService {
     if (token == null || _intentionalClose) return;
 
     final uri = Uri.parse(
-      '${AppConfig.wsBaseUrl}/ws/conductor/$_solicitudId?token=$token',
+      '${AppConfig.wsBaseUrl}/ws/conductor/$_solicitudId',
     );
 
     AppLogger.info('WsService: conectando', context: {
@@ -119,7 +125,8 @@ class WsService {
     try {
       // Un canal anterior que siga abierto se cierra antes de abrir el nuevo.
       if (_channel != null) _cleanChannel();
-      final canal = _crearCanal(uri);
+      // El token viaja en `Sec-WebSocket-Protocol`, no en la URL (la query queda en los registros).
+      final canal = _crearCanal(uri, [subprotocolo, token]);
       _channel = canal;
       _ultimaActividad = _ahora();
       // En modo resiliente el contador solo se reinicia cuando llega algo del servidor: abrir el

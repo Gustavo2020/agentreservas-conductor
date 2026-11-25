@@ -104,7 +104,7 @@ Future<Map<String, String>> _headers() async {
 
 ### 2.3 WebSocket — Autenticación
 
-La conexión WebSocket incluye el JWT como query param `?token=<jwt>` (ver `WsService`).
+La conexión WebSocket manda el JWT por el subprotocolo `Sec-WebSocket-Protocol` (`patrix.conductor, <jwt>`), nunca en la URL (ver `WsService`).
 El token se obtiene de `AuthService.getToken()` inmediatamente antes de conectar; nunca se cachea en memoria fuera de `AuthService`.
 
 ---

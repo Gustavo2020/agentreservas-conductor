@@ -51,6 +51,8 @@ class _Canal extends StreamChannelMixin<dynamic> implements WebSocketChannel {
 void main() {
   late List<_Canal> canales;
   late int verificaciones;
+  late List<Uri> urisAbiertas;
+  late List<List<String>> protocolosAbiertos;
 
   WsService crear(FakeAsync async,
       {bool resiliente = true, bool canalesFallan = false}) {
@@ -61,7 +63,9 @@ void main() {
       resiliente: resiliente,
       ahora: reloj.now,
       verificarSesion: () async => verificaciones++,
-      crearCanal: (uri) {
+      crearCanal: (uri, protocolos) {
+        urisAbiertas.add(uri);
+        protocolosAbiertos.add(protocolos.toList());
         final c = _Canal();
         canales.add(c);
         if (canalesFallan) scheduleMicrotask(c.fallar);
@@ -72,6 +76,8 @@ void main() {
 
   setUp(() {
     canales = [];
+    urisAbiertas = [];
+    protocolosAbiertos = [];
     verificaciones = 0;
   });
 
@@ -112,6 +118,19 @@ void main() {
       // Igual que antes de la demo: el contador se reinicia al abrir el canal, la espera no crece.
       expect(canales.length, inInclusiveRange(18, 22));
       expect(verificaciones, 0);
+      unawaited(ws.disconnect());
+      async.flushMicrotasks();
+    });
+  });
+
+  test('el token viaja por subprotocolo y nunca en la URL', () {
+    fakeAsync((async) {
+      final ws = crear(async);
+      unawaited(ws.connect(1));
+      async.flushMicrotasks();
+      expect(protocolosAbiertos.first, ['patrix.conductor', 'tok']);
+      expect(urisAbiertas.first.toString(), isNot(contains('tok')));
+      expect(urisAbiertas.first.query, isEmpty);
       unawaited(ws.disconnect());
       async.flushMicrotasks();
     });
